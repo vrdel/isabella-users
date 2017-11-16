@@ -2,8 +2,9 @@ import os
 import libuser
 
 class UserUtils(object):
-    def __init__(self, gid):
+    def __init__(self, gid, logger):
         self.gid = gid
+        self.logger = logger
 
     def create_home(self, user):
         pass

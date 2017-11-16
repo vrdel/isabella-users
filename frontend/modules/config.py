@@ -15,6 +15,9 @@ def parse_config(logger=None):
                     confopts['external'].update({'mailinglist': config.get(section, 'mailinglist')})
                     confopts['external'].update({'mailinglisttoken': config.get(section, 'mailinglisttoken')})
 
+                if section.startswith('settings'):
+                    confopts['settings'] = ({'gid': config.get(section, 'gid')})
+
             return confopts
 
         else:
