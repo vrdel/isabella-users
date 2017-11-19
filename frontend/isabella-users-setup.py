@@ -14,14 +14,19 @@ conf_opts = parse_config()
 
 def fetch_newly_created_users(subscription, logger):
     try:
-        response = requests.get(subscription, timeout=connection_timeout)
+        response = requests.get(subscription, timeout=connection_timeout, verify=False)
         response.raise_for_status()
-        users = response.json()
+        projects = response.json()
+
+        users = list()
+        for p in projects:
+            if p.get('users', None):
+                users = [u for u in p['users']]
 
         return users
 
     except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
-        logger.error(e)
+        logger.error('requests error: %s' % e)
         raise SystemExit(1)
 
     except Exception as e:
@@ -38,8 +43,10 @@ def main():
 
     if users:
         for u in users:
-            uobj = usertool.get_user(u['username'])
+            username = u['uid'].split('@')[0]
+            uobj = usertool.get_user(username)
             if uobj:
                 print uobj.get(libuser.USERNAME)
 
-main()
+if __name__ == '__main__':
+    main()
