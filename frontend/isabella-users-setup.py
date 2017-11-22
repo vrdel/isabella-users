@@ -33,6 +33,18 @@ def fetch_newly_created_users(subscription, logger):
         logger.error(e)
         raise SystemExit(1)
 
+def gen_username(uid, logger):
+    username = None
+
+    try:
+        if '@' in uid['uid']:
+            username = uid['uid'].split('@')[0]
+
+    except Exception as e:
+        logger.error(e)
+
+    return username
+
 
 def main():
     lobj = Logger(sys.argv[0])
@@ -43,7 +55,7 @@ def main():
 
     if users:
         for u in users:
-            username = u['uid'].split('@')[0]
+            username = gen_username(u)
             uobj = usertool.get_user(username)
             if uobj:
                 print uobj.get(libuser.USERNAME)

@@ -10,6 +10,28 @@ class ProjectsFeed(unittest.TestCase):
     def setUp(self):
         log = Logger('test')
         self.log = log.get()
+        self.bogususerfeed = \
+            """[{
+                "id": 108,
+                "sifra": "API-2017",
+                "status_id": "1",
+                "date_from": "2017-11-10",
+                "date_to": "2017-12-31",
+                "users": [
+                    {
+                        "id": 375,
+                        "uid": "hsutesrce.hr",
+                        "ime": "Hrvoje",
+                        "prezime": "Sute",
+                        "mail": "Hrvoje.Sute@srce.hr",
+                        "status_id": "1",
+                        "pivot": {
+                            "project_id": "108",
+                            "osoba_id": "375"
+                        }
+                    }
+                ]
+            }]"""
         self.feed = \
             """[{
                 "id": 108,
@@ -66,3 +88,25 @@ class ProjectsFeed(unittest.TestCase):
                                                                self.log)
         self.assertTrue(reqget.called)
         self.assertEqual(len(users), 3)
+
+    @mock.patch('isabella_users_setup.requests.get')
+    def testUsername(self, reqget):
+        mocresp = mock.create_autospec(requests.Response)
+        mocresp.json.side_effect = [json.loads(self.bogususerfeed), json.loads(self.feed)]
+        reqget.return_value = mocresp
+        users = isabella_users_setup.fetch_newly_created_users(isabella_users_setup.conf_opts,
+                                                               self.log)
+        userlist = list()
+        for u in users:
+            userlist.append(isabella_users_setup.gen_username(u, self.log))
+
+        self.assertEqual(userlist, [None])
+
+        users = isabella_users_setup.fetch_newly_created_users(isabella_users_setup.conf_opts,
+                                                               self.log)
+
+
+        userlist = list()
+        for u in users:
+            userlist.append(isabella_users_setup.gen_username(u, self.log))
+        self.assertEqual(userlist, ['hsute','skala','vpaar'])
