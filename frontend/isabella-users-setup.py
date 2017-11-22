@@ -39,6 +39,8 @@ def gen_username(uid, logger):
     try:
         if '@' in uid['uid']:
             username = uid['uid'].split('@')[0]
+        else:
+            logger.warning('Wrong uid: %s' % uid['uid'])
 
     except Exception as e:
         logger.error(e)
