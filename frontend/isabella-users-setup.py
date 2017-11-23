@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
+import os
 import requests
 import sys
 import libuser
+import shutil
 
 from isabella_users_frontend.userutils import UserUtils
 from isabella_users_frontend.config import parse_config
@@ -47,20 +49,40 @@ def gen_username(uid, logger):
 
     return username
 
+def create_homedir(dir, uid, gid):
+    try:
+        os.mkdir(dir, 0750)
+        os.chown(dir, uid, gid)
+
+        for root, dirs, files in os.walk('/etc/skel'):
+            for f in files:
+                shutil.copy(root + '/' + f, dir)
+                os.chown(dir + '/' + f, uid, gid)
+
+        return True
+
+    except Exception:
+        return False
 
 def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
 
-    usertool = UserUtils(conf_opts['settings']['gid'], logger)
+    usertool = UserUtils(logger)
     users = fetch_newly_created_users(conf_opts['external']['subscription'], logger)
 
     if users:
         for u in users:
-            username = gen_username(u)
+            username = gen_username(u, logger)
             uobj = usertool.get_user(username)
             if uobj:
-                print uobj.get(libuser.USERNAME)
+                home = usertool.get_user_home(uobj)
+                if not os.path.exists(home):
+                    uid = usertool.get_user_id(uobj)
+                    if not create_homedir(home, uid, conf_opts['settings']['gid']):
+                        logger.error('Failed %s directory creation' % home)
+                else:
+                    logger.warning('Skipping %s directory creation, already exists' % home)
 
 if __name__ == '__main__':
     main()

@@ -79,6 +79,7 @@ class ProjectsFeed(unittest.TestCase):
                 ]
             }]"""
 
+    @unittest.skip('skip this')
     @mock.patch('isabella_users_setup.requests.get')
     def testParseProjectsFeed(self, reqget):
         mocresp = mock.create_autospec(requests.Response)
@@ -89,6 +90,15 @@ class ProjectsFeed(unittest.TestCase):
         self.assertTrue(reqget.called)
         self.assertEqual(len(users), 3)
 
+    # @unittest.skip('skip this')
+    @mock.patch('isabella_users_setup.requests.get')
+    def testMain(self, reqget):
+        mocresp = mock.create_autospec(requests.Response)
+        mocresp.json.return_value = json.loads(self.feed)
+        reqget.return_value = mocresp
+        isabella_users_setup.main()
+
+    @unittest.skip('skip this')
     @mock.patch('isabella_users_setup.requests.get')
     def testUsername(self, reqget):
         mocresp = mock.create_autospec(requests.Response)

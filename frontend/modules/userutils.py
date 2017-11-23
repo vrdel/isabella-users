@@ -2,14 +2,16 @@ import os
 import libuser
 
 class UserUtils(object):
-    def __init__(self, gid, logger):
-        self.gid = gid
+    def __init__(self, logger):
         self.logger = logger
-
-    def create_home(self, user):
-        pass
 
     def get_user(self, username):
         user = libuser.admin().lookupUserByName(username)
-
         return user
+
+    def get_user_home(self, userobj):
+        return userobj.get(libuser.HOMEDIRECTORY)[0]
+
+    def get_user_id(self, userobj):
+        return userobj.get(libuser.UIDNUMBER)[0]
+
