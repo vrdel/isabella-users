@@ -1,4 +1,5 @@
 import ConfigParser
+import sys
 
 conf = '/etc/isabella-users-frontend/frontend.conf'
 
@@ -17,6 +18,10 @@ def parse_config(logger=None):
 
                 if section.startswith('settings'):
                     confopts['settings'] = {'gid': long(config.get(section, 'gid'))}
+                    sharedpath = config.get(section, 'sharedpath')
+                    if not sharedpath.endswith('/'):
+                        sharedpath = sharedpath + '/'
+                    confopts['settings'].update({'sharedpath': sharedpath})
 
             return confopts
 

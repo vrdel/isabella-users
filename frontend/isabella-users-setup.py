@@ -35,6 +35,7 @@ def fetch_newly_created_users(subscription, logger):
         logger.error(e)
         raise SystemExit(1)
 
+
 def gen_username(uid, logger):
     username = None
 
@@ -49,7 +50,19 @@ def gen_username(uid, logger):
 
     return username
 
-def create_homedir(dir, uid, gid):
+
+def create_shareddir(dir, uid, gid, logger):
+    try:
+        os.mkdir(dir, 0750)
+        os.chown(dir, uid, gid)
+
+        return True
+    except Exception as e:
+        logger.error(e)
+        return False
+
+
+def create_homedir(dir, uid, gid, logger):
     try:
         os.mkdir(dir, 0750)
         os.chown(dir, uid, gid)
@@ -61,8 +74,10 @@ def create_homedir(dir, uid, gid):
 
         return True
 
-    except Exception:
+    except Exception as e:
+        logger.error(e)
         return False
+
 
 def main():
     lobj = Logger(sys.argv[0])
@@ -76,13 +91,22 @@ def main():
             username = gen_username(u, logger)
             uobj = usertool.get_user(username)
             if uobj:
+                uid = usertool.get_user_id(uobj)
+
                 home = usertool.get_user_home(uobj)
                 if not os.path.exists(home):
-                    uid = usertool.get_user_id(uobj)
-                    if not create_homedir(home, uid, conf_opts['settings']['gid']):
+                    if not create_homedir(home, uid, conf_opts['settings']['gid'], logger):
                         logger.error('Failed %s directory creation' % home)
                 else:
                     logger.warning('Skipping %s directory creation, already exists' % home)
+
+                sharedpath = conf_opts['settings']['sharedpath']
+                if not os.path.exists(sharedpath + username):
+                    if not create_shareddir(sharedpath + username, uid, conf_opts['settings']['gid'], logger):
+                        logger.error('Failed %s directory creation' % (sharedpath + username))
+                else:
+                    logger.warning('Skipping %s directory creation, already exists' % (sharedpath + username))
+
 
 if __name__ == '__main__':
     main()
