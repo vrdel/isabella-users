@@ -1,4 +1,3 @@
-import os
 import libuser
 
 class UserUtils(object):
@@ -15,3 +14,8 @@ class UserUtils(object):
     def get_user_id(self, userobj):
         return userobj.get(libuser.UIDNUMBER)[0]
 
+    def get_user_pass(self, userobj):
+        return userobj.get(libuser.SHADOWPASSWORD)[0]
+
+    def set_user_pass(self, userobj, password):
+        libuser.admin().setpassUser(userobj, password, False)
