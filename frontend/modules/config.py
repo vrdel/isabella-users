@@ -1,5 +1,6 @@
 import ConfigParser
 import sys
+import os
 
 conf = '/etc/isabella-users-frontend/frontend.conf'
 
@@ -22,6 +23,16 @@ def parse_config(logger=None):
                     if not sharedpath.endswith('/'):
                         sharedpath = sharedpath + '/'
                     confopts['settings'].update({'sharedpath': sharedpath})
+                    skeletonpath = config.get(section, 'skeletonpath')
+                    if not sharedpath.endswith('/'):
+                        skeletonpath = skeletonpath + '/'
+                    confopts['settings'].update({'skeletonpath': skeletonpath})
+                    if not os.path.exists(confopts['settings']['skeletonpath']):
+                        if logger:
+                            logger.error('%s does not exist' % confopts['settings']['skeletonpath'])
+                        else:
+                            sys.stderr.write('%s does not exist\n' % confopts['settings']['skeletonpath'])
+                        raise SystemExit(1)
 
             return confopts
 

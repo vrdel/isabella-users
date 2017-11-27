@@ -75,7 +75,7 @@ def create_homedir(dir, uid, gid, logger):
         os.mkdir(dir, 0750)
         os.chown(dir, uid, gid)
 
-        for root, dirs, files in os.walk('/etc/skel'):
+        for root, dirs, files in os.walk(conf_opts['settings']['skeletonpath']):
             for f in files:
                 shutil.copy(root + '/' + f, dir)
                 os.chown(dir + '/' + f, uid, gid)
