@@ -4,6 +4,7 @@ import os
 import requests
 import shutil
 import sys
+import subprocess
 
 from base64 import b64encode
 
@@ -124,6 +125,15 @@ def main():
                     password = gen_password()
                     usertool.set_user_pass(uobj, password)
                     email_info[username].update(password=password)
+
+                sgecreateuser_cmd = conf_opts['settings']['sgecreateuser']
+                try:
+                    out = subprocess.Popen('{0} {1} {2}'.format(sgecreateuser_cmd, username, 'foo'),
+                                           shell=True, bufsize=512,
+                                           stdout=subprocess.PIPE).stdout
+                    logger.info('User %s added to SGE: %s' % (username, out.read()))
+                except Exception as e:
+                    logger.error('Failed adding user %s to SGE: %s ' % (username, repr(e)))
 
     else:
         raise SystemExit(1)

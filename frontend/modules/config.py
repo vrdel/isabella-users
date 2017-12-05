@@ -19,10 +19,12 @@ def parse_config(logger=None):
 
                 if section.startswith('settings'):
                     confopts['settings'] = {'gid': long(config.get(section, 'gid'))}
+
                     sharedpath = config.get(section, 'sharedpath')
                     if not sharedpath.endswith('/'):
                         sharedpath = sharedpath + '/'
                     confopts['settings'].update({'sharedpath': sharedpath})
+
                     skeletonpath = config.get(section, 'skeletonpath')
                     if not sharedpath.endswith('/'):
                         skeletonpath = skeletonpath + '/'
@@ -32,6 +34,15 @@ def parse_config(logger=None):
                             logger.error('%s does not exist' % confopts['settings']['skeletonpath'])
                         else:
                             sys.stderr.write('%s does not exist\n' % confopts['settings']['skeletonpath'])
+                        raise SystemExit(1)
+
+                    sgecreateuser = config.get(section, 'sgecreateuser')
+                    confopts['settings'].update({'sgecreateuser': sgecreateuser})
+                    if not os.path.exists(confopts['settings']['skeletonpath']):
+                        if logger:
+                            logger.error('%s does not exist' % confopts['settings']['sgecreateuser'])
+                        else:
+                            sys.stderr.write('%s does not exist\n' % confopts['settings']['sgecreateuser'])
                         raise SystemExit(1)
 
             return confopts
