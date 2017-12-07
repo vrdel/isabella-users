@@ -128,15 +128,16 @@ def main():
 
                 sgecreateuser_cmd = conf_opts['settings']['sgecreateuser']
                 try:
-                    out = subprocess.Popen('{0} {1} {2}'.format(sgecreateuser_cmd, username, 'foo'),
-                                           shell=True, bufsize=512,
-                                           stdout=subprocess.PIPE).stdout
-                    logger.info('User %s added to SGE: %s' % (username, out.read()))
+                    os.chdir(os.path.dirname(sgecreateuser_cmd))
+                    subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, username, 'foo'),
+                                           shell=True, bufsize=512)
+                    logger.info('User %s added to SGE' % username)
+
                 except Exception as e:
-                    logger.error('Failed adding user %s to SGE: %s ' % (username, repr(e)))
+                    logger.error('Failed adding user %s to SGE: %s ' % (username, str(e)))
 
     else:
-        raise SystemExit(1)
+        raise SystemExit(0)
 
 
 if __name__ == '__main__':
