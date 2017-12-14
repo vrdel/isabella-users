@@ -3,8 +3,9 @@
 import os
 import requests
 import shutil
-import sys
+import sqlite3
 import subprocess
+import sys
 
 from base64 import b64encode
 
@@ -98,7 +99,11 @@ def main():
 
     email_info = dict()
 
+
     if users:
+        con = sqlite3.connect('/root/cache.db')
+        cur = con.cursor()
+
         for u in users:
             username = gen_username(u, logger)
             email_info.update({username: dict()})
@@ -106,7 +111,11 @@ def main():
             uobj = usertool.get_user(username)
             if uobj:
                 uid = usertool.get_user_id(uobj)
-
+                cur.execute('select * from users where username = ?', (username,))
+                if not cur.fetchone():
+                    cur.execute('insert into users VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                                (None, username, 0, 0, 0, 0, 0, 0))
+                    con.commit()
                 home = usertool.get_user_home(uobj)
                 if not os.path.exists(home):
                     if not create_homedir(home, uid, conf_opts['settings']['gid'], logger):
@@ -135,6 +144,8 @@ def main():
 
                 except Exception as e:
                     logger.error('Failed adding user %s to SGE: %s ' % (username, str(e)))
+
+        con.close()
 
     else:
         raise SystemExit(0)
