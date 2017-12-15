@@ -101,7 +101,7 @@ def main():
 
 
     if users:
-        con = sqlite3.connect('/root/cache.db')
+        con = sqlite3.connect(conf_opts['settings']['cache'])
         con.row_factory = sqlite3.Row
         cur = con.cursor()
 
