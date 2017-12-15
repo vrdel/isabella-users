@@ -102,6 +102,7 @@ def main():
 
     if users:
         con = sqlite3.connect('/root/cache.db')
+        con.row_factory = sqlite3.Row
         cur = con.cursor()
 
         for u in users:
@@ -112,38 +113,59 @@ def main():
             if uobj:
                 uid = usertool.get_user_id(uobj)
                 cur.execute('select * from users where username = ?', (username,))
-                if not cur.fetchone():
+                r = cur.fetchone()
+                if not r:
                     cur.execute('insert into users VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                                 (None, username, 0, 0, 0, 0, 0, 0))
                     con.commit()
-                home = usertool.get_user_home(uobj)
-                if not os.path.exists(home):
-                    if not create_homedir(home, uid, conf_opts['settings']['gid'], logger):
-                        logger.error('Failed %s directory creation' % home)
-                else:
-                    logger.warning('Skipping %s directory creation, already exists' % home)
+                    cur.execute('select * from users where username = ?', (username,))
+                    r = cur.fetchone()
 
-                sharedpath = conf_opts['settings']['sharedpath']
-                if not os.path.exists(sharedpath + username):
-                    if not create_shareddir(sharedpath + username, uid, conf_opts['settings']['gid'], logger):
-                        logger.error('Failed %s directory creation' % (sharedpath + username))
-                else:
-                    logger.warning('Skipping %s directory creation, already exists' % (sharedpath + username))
+                userid, username, ishome, isshared, ispass, issge, ismaillist, isemail = r
 
-                if usertool.get_user_pass(uobj) == '!!':
-                    password = gen_password()
-                    usertool.set_user_pass(uobj, password)
-                    email_info[username].update(password=password)
+                if not ishome:
+                    home = usertool.get_user_home(uobj)
 
-                sgecreateuser_cmd = conf_opts['settings']['sgecreateuser']
-                try:
-                    os.chdir(os.path.dirname(sgecreateuser_cmd))
-                    subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, username, 'foo'),
-                                           shell=True, bufsize=512)
-                    logger.info('User %s added to SGE' % username)
+                    if not os.path.exists(home):
+                        if not create_homedir(home, uid, conf_opts['settings']['gid'], logger):
+                            logger.error('Failed %s directory creation' % home)
+                        else:
+                            cur.execute('update users set home = ?', (1, ))
+                            con.commit()
+                    else:
+                        logger.warning('Skipping %s directory creation, already exists' % home)
 
-                except Exception as e:
-                    logger.error('Failed adding user %s to SGE: %s ' % (username, str(e)))
+                if not isshared:
+                    sharedpath = conf_opts['settings']['sharedpath']
+                    if not os.path.exists(sharedpath + username):
+                        if not create_shareddir(sharedpath + username, uid, conf_opts['settings']['gid'], logger):
+                            logger.error('Failed %s directory creation' % (sharedpath + username))
+                        else:
+                            cur.execute('update users set shared = ?', (1, ))
+                            con.commit()
+                    else:
+                        logger.warning('Skipping %s directory creation, already exists' % (sharedpath + username))
+
+                if not ispass:
+                    if usertool.get_user_pass(uobj) == '!!':
+                        password = gen_password()
+                        usertool.set_user_pass(uobj, password)
+                        email_info[username].update(password=password)
+                        cur.execute('update users set pass = ?', (1, ))
+                        con.commit()
+
+                if not issge:
+                    sgecreateuser_cmd = conf_opts['settings']['sgecreateuser']
+                    try:
+                        os.chdir(os.path.dirname(sgecreateuser_cmd))
+                        subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, username, 'foo'),
+                                            shell=True, bufsize=512)
+                        logger.info('User %s added to SGE' % username)
+                        cur.execute('update users set sge = ?', (1, ))
+                        con.commit()
+
+                    except Exception as e:
+                        logger.error('Failed adding user %s to SGE: %s ' % (username, str(e)))
 
         con.close()
 
