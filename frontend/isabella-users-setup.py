@@ -90,6 +90,27 @@ def create_homedir(dir, uid, gid, logger):
         return False
 
 
+def subscribe_maillist(token, name, email, username, logger):
+    try:
+        headers, payload = {}, {}
+
+        headers = requests.utils.default_headers()
+        headers.update({'content-type': 'application/x-www-form-urlencoded'})
+        headers.update({'x-auth-token': token})
+        payload = "list={0}&email={1}".format(name, email)
+
+        response = requests.post(conf_opts['external']['mailinglist'], headers=headers,
+                                data=payload, timeout=180)
+        response.raise_for_status()
+
+        return True
+
+    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
+        logger.error('Failed subscribing user %s on %s: %s' % (username, name,
+                                                               str(e)))
+        return False
+
+
 def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
@@ -107,8 +128,9 @@ def main():
 
         for u in users:
             username = gen_username(u, logger)
+            email = u['mail']
             email_info.update({username: dict()})
-            email_info[username].update(email=u['mail'])
+            email_info[username].update(email=email)
             uobj = usertool.get_user(username)
             if uobj:
                 uid = usertool.get_user_id(uobj)
@@ -166,6 +188,13 @@ def main():
 
                     except Exception as e:
                         logger.error('Failed adding user %s to SGE: %s ' % (username, str(e)))
+
+                if not ismaillist:
+                    if subscribe_maillist(conf_opts['external']['mailinglisttoken'],
+                                          conf_opts['external']['mailinglistname'],
+                                          email, username, logger):
+                        cur.execute('update users set maillist = ?', (1, ))
+                        con.commit()
 
         con.close()
 
