@@ -12,6 +12,7 @@ from base64 import b64encode
 from isabella_users_frontend.config import parse_config
 from isabella_users_frontend.log import Logger
 from isabella_users_frontend.userutils import UserUtils
+from isabella_users_frontend.msg import InfoAccOpen
 
 connection_timeout = 120
 conf_opts = parse_config()
@@ -99,8 +100,8 @@ def subscribe_maillist(token, name, email, username, logger):
         headers.update({'x-auth-token': token})
         payload = "list={0}&email={1}".format(name, email)
 
-        response = requests.post(conf_opts['external']['mailinglist'], headers=headers,
-                                data=payload, timeout=180)
+        response = requests.post(conf_opts['external']['mailinglist'],
+                                 headers=headers, data=payload, timeout=180)
         response.raise_for_status()
 
         return True
@@ -127,6 +128,7 @@ def main():
         cur = con.cursor()
 
         for u in users:
+            password = None
             username = gen_username(u, logger)
             email = u['mail']
             email_info.update({username: dict()})
@@ -137,13 +139,13 @@ def main():
                 cur.execute('select * from users where username = ?', (username,))
                 r = cur.fetchone()
                 if not r:
-                    cur.execute('insert into users VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                                (None, username, 0, 0, 0, 0, 0, 0))
+                    cur.execute('insert into users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                                (None, username, 0, 0, 0, None, 0, 0, 0))
                     con.commit()
                     cur.execute('select * from users where username = ?', (username,))
                     r = cur.fetchone()
 
-                userid, username, ishome, isshared, ispass, issge, ismaillist, isemail = r
+                userid, username, ishome, isshared, ispass, passval, issge, ismaillist, isemail = r
 
                 if not ishome:
                     home = usertool.get_user_home(uobj)
@@ -152,7 +154,7 @@ def main():
                         if not create_homedir(home, uid, conf_opts['settings']['gid'], logger):
                             logger.error('Failed %s directory creation' % home)
                         else:
-                            cur.execute('update users set home = ?', (1, ))
+                            cur.execute('update users set home = ? where username == ?', (1, username, ))
                             con.commit()
                     else:
                         logger.warning('Skipping %s directory creation, already exists' % home)
@@ -163,7 +165,7 @@ def main():
                         if not create_shareddir(sharedpath + username, uid, conf_opts['settings']['gid'], logger):
                             logger.error('Failed %s directory creation' % (sharedpath + username))
                         else:
-                            cur.execute('update users set shared = ?', (1, ))
+                            cur.execute('update users set shared = ? where username == ?', (1, username, ))
                             con.commit()
                     else:
                         logger.warning('Skipping %s directory creation, already exists' % (sharedpath + username))
@@ -173,7 +175,8 @@ def main():
                         password = gen_password()
                         usertool.set_user_pass(uobj, password)
                         email_info[username].update(password=password)
-                        cur.execute('update users set pass = ?', (1, ))
+                        cur.execute('update users set pass = ? where username == ?', (1, username, ))
+                        cur.execute('update users set passvalue = ? where username == ?', (password, username, ))
                         con.commit()
 
                 if not issge:
@@ -183,7 +186,7 @@ def main():
                         subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, username, 'foo'),
                                             shell=True, bufsize=512)
                         logger.info('User %s added to SGE' % username)
-                        cur.execute('update users set sge = ?', (1, ))
+                        cur.execute('update users set sge = ? where username == ?', (1, username, ))
                         con.commit()
 
                     except Exception as e:
@@ -193,8 +196,16 @@ def main():
                     if subscribe_maillist(conf_opts['external']['mailinglisttoken'],
                                           conf_opts['external']['mailinglistname'],
                                           email, username, logger):
-                        cur.execute('update users set maillist = ?', (1, ))
+                        cur.execute('update users set maillist = ? where username == ?', (1, username, ))
                         con.commit()
+
+                if not isemail:
+                    templatepath = conf_opts['external']['emailtemplate']
+                    smtpserver = conf_opts['external']['emailsmtp']
+                    emailfrom = conf_opts['external']['emailfrom']
+
+                    e = InfoAccOpen(username, password, templatepath,
+                                    smtpserver, emailfrom, email, logger)
 
         con.close()
 
