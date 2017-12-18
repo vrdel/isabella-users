@@ -5,6 +5,7 @@ CREATE TABLE users
     home INTEGER,
     shared INTEGER,
     pass INTEGER,
+    passvalue TEXT,
     sge INTEGER,
     maillist INTEGER,
     email INTEGER
