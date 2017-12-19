@@ -20,6 +20,13 @@ def parse_config(logger=None):
                     confopts['external'].update({'emailfrom': config.get(section, 'emailfrom')})
                     confopts['external'].update({'emailsmtp': config.get(section, 'emailsmtp')})
                     confopts['external'].update({'emailtemplate': config.get(section, 'emailtemplate')})
+                    if not os.path.exists(confopts['external']['emailtemplate']):
+                        if logger:
+                            logger.error('%s does not exist' % confopts['external']['emailtemplate'])
+                        else:
+                            sys.stderr.write('%s does not exist\n' % confopts['external']['emailtemplate'])
+                        raise SystemExit(1)
+
 
                 if section.startswith('settings'):
                     confopts['settings'] = {'gid': long(config.get(section, 'gid'))}
