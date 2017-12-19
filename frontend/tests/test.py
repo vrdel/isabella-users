@@ -148,8 +148,9 @@ class ProjectsFeed(unittest.TestCase):
     @mock.patch('isabella_users_setup.requests.post')
     @mock.patch('isabella_users_setup.requests.get')
     def testAccOpened(self, reqget, reqpost, psqlite):
+        password = isabella_users_setup.gen_password()
         moccursor = mock.Mock()
-        moccursor.fetchone.side_effect= [(3, 'dvrcic', 1, 1, 1, 'foo', 1, 1, 0)]
+        moccursor.fetchone.side_effect= [(3, 'dvrcic', 1, 1, 1, 'foo', 1, 1, 0), password]
         mocconn = mock.Mock()
         mocconn.cursor.return_value = moccursor
         mocresp = mock.create_autospec(requests.Response)
