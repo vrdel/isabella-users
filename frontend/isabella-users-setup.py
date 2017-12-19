@@ -202,9 +202,12 @@ def main():
                     templatepath = conf_opts['external']['emailtemplate']
                     smtpserver = conf_opts['external']['emailsmtp']
                     emailfrom = conf_opts['external']['emailfrom']
+                    cur.execute('select passvalue from users where username = ?', (username,))
+                    password = cur.fetchone()
 
                     e = InfoAccOpen(username, password, templatepath,
                                     smtpserver, emailfrom, email, logger)
+                    e.send()
 
         con.close()
 
