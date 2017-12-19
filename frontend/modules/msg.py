@@ -15,18 +15,38 @@ class InfoAccOpen(object):
         self.logger = logger
 
     def _construct_email(self):
-        pass
+        text = None
+        with open(self.templatepath) as fp:
+            text = fp.readlines()
+
+        if text:
+            text = ''.join(text)
+            text = text.replace('__USERNAME__', self.username)
+            text = text.replace('__PASSWORD__', self.password)
+
+            m = MIMEText(text)
+            m['From'] = self.emailfrom
+            m['To'] = self.emailto
+            m['Subject'] = 'Account na klasteru Isabella'
+
+            return m.as_string()
+
+        else:
+            return None
 
     def send(self):
-        try:
-            s = smtplib.SMTP(self.smtpserver, 25, timeout=120)
-            s.ehlo()
-            s.sendmail(self.emailfrom, [self.emailto], self._construct_email())
-            s.quit()
+        email_text = self._construct_email()
+        if not email_text:
+            self.logger.error('Could not construct an email')
 
-            return True
+        else:
+            try:
+                s = smtplib.SMTP(self.smtpserver, 25, timeout=120)
+                s.ehlo()
+                s.sendmail(self.emailfrom, [self.emailto], email_text)
+                s.quit()
 
-        except (socket.error, smtplib.SMTPException) as e:
-            self.logger.error(repr(self.__class__.__name__).replace('\'', '') + ': ' + repr(e))
+                return True
 
-            return False
+            except (socket.error, smtplib.SMTPException) as e:
+                self.logger.error(repr(e))
