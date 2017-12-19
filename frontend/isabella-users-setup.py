@@ -121,7 +121,6 @@ def main():
 
     email_info = dict()
 
-
     if users:
         con = sqlite3.connect(conf_opts['settings']['cache'])
         con.row_factory = sqlite3.Row

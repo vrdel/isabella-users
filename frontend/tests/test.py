@@ -79,7 +79,7 @@ class ProjectsFeed(unittest.TestCase):
                     }
                 ]
             }]"""
-        self.feedlist = \
+        self.feedemail = \
             """[{
                 "id": 108,
                 "sifra": "API-2017",
@@ -89,50 +89,6 @@ class ProjectsFeed(unittest.TestCase):
                 "users": [
                     {
                         "id": 375,
-                        "uid": "hsute@srce.hr",
-                        "ime": "Hrvoje",
-                        "prezime": "Sute",
-                        "mail": "Hrvoje.Sute@srce.hr",
-                        "status_id": "1",
-                        "pivot": {
-                            "project_id": "108",
-                            "osoba_id": "375"
-                        }
-                    },
-                    {
-                        "id": 30,
-                        "uid": "skala@irb.hr",
-                        "ime": "Karolj",
-                        "prezime": "Skala",
-                        "mail": "skala@irb.hr",
-                        "status_id": "1",
-                        "pivot": {
-                            "project_id": "108",
-                            "osoba_id": "30"
-                        }
-                    }
-                ]},
-                {
-                "id": 109,
-                "sifra": "API-2018",
-                "status_id": "1",
-                "date_from": "2017-11-10",
-                "date_to": "2018-12-31",
-                "users": [
-                    {
-                        "id": 375,
-                        "uid": "hsute@srce.hr",
-                        "ime": "Hrvoje",
-                        "prezime": "Sute",
-                        "mail": "Hrvoje.Sute@srce.hr",
-                        "status_id": "1",
-                        "pivot": {
-                            "project_id": "109",
-                            "osoba_id": "375"
-                        }
-                    },
-                    {
-                        "id": 370,
                         "uid": "dvrcic@srce.hr",
                         "ime": "Daniel",
                         "prezime": "Vrcic",
@@ -140,7 +96,7 @@ class ProjectsFeed(unittest.TestCase):
                         "status_id": "1",
                         "pivot": {
                             "project_id": "108",
-                            "osoba_id": "370"
+                            "osoba_id": "375"
                         }
                     }
                 ]}
@@ -157,7 +113,7 @@ class ProjectsFeed(unittest.TestCase):
         self.assertTrue(reqget.called)
         self.assertEqual(len(users), 3)
 
-    # @unittest.skip('skip this')
+    @unittest.skip('skip this')
     @mock.patch('isabella_users_setup.requests.post')
     @mock.patch('isabella_users_setup.requests.get')
     def testMain(self, reqget, reqpost):
@@ -172,9 +128,9 @@ class ProjectsFeed(unittest.TestCase):
     @mock.patch('isabella_users_setup.requests.get')
     def testEmail(self, reqget, reqpost, psqlite):
         moccursor = mock.Mock()
-        moccursor.fetchone.side_effect= [(0, 'hsute', 1, 1, 1, 'foo', 1, 0, 0),
-                                         (1, 'skala', 1, 1, 1, 'foo', 1, 0, 0),
-                                         (2, 'vpaar', 1, 1, 1, 'foo', 1, 0, 0)]
+        moccursor.fetchone.side_effect= [(0, 'hsute', 1, 1, 1, 'foo', 1, 0, 1),
+                                         (1, 'skala', 1, 1, 1, 'foo', 1, 0, 1),
+                                         (2, 'vpaar', 1, 1, 1, 'foo', 1, 0, 1)]
         mocconn = mock.Mock()
         mocconn.cursor.return_value = moccursor
         mocresp = mock.create_autospec(requests.Response)
@@ -186,6 +142,16 @@ class ProjectsFeed(unittest.TestCase):
             self.assertEqual(reqpost.call_args_list[0][1]['data'], 'list=Isabella-dezurni&email=Hrvoje.Sute@srce.hr')
             self.assertEqual(reqpost.call_args_list[1][1]['data'], 'list=Isabella-dezurni&email=skala@irb.hr')
             self.assertEqual(reqpost.call_args_list[2][1]['data'], 'list=Isabella-dezurni&email=vpaar@phy.hr')
+
+        moccursor = mock.Mock()
+        moccursor.fetchone.side_effect= [(3, 'dvrcic', 1, 1, 1, 'foo', 1, 1, 0)]
+        mocconn = mock.Mock()
+        mocconn.cursor.return_value = moccursor
+        mocresp = mock.create_autospec(requests.Response)
+        mocresp.json.return_value = json.loads(self.feedemail)
+        reqget.return_value = mocresp
+        psqlite.connect.return_value = mocconn
+        isabella_users_setup.main()
 
     @unittest.skip('skip this')
     @mock.patch('isabella_users_setup.requests.get')
