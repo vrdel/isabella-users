@@ -122,11 +122,11 @@ class ProjectsFeed(unittest.TestCase):
         reqget.return_value = mocresp
         isabella_users_setup.main()
 
-    # @unittest.skip('skip this')
+    @unittest.skip('skip this')
     @mock.patch('isabella_users_setup.sqlite3')
     @mock.patch('isabella_users_setup.requests.post')
     @mock.patch('isabella_users_setup.requests.get')
-    def testEmail(self, reqget, reqpost, psqlite):
+    def testSubscribe(self, reqget, reqpost, psqlite):
         moccursor = mock.Mock()
         moccursor.fetchone.side_effect= [(0, 'hsute', 1, 1, 1, 'foo', 1, 0, 1),
                                          (1, 'skala', 1, 1, 1, 'foo', 1, 0, 1),
@@ -143,6 +143,11 @@ class ProjectsFeed(unittest.TestCase):
             self.assertEqual(reqpost.call_args_list[1][1]['data'], 'list=Isabella-dezurni&email=skala@irb.hr')
             self.assertEqual(reqpost.call_args_list[2][1]['data'], 'list=Isabella-dezurni&email=vpaar@phy.hr')
 
+    # @unittest.skip('skip this')
+    @mock.patch('isabella_users_setup.sqlite3')
+    @mock.patch('isabella_users_setup.requests.post')
+    @mock.patch('isabella_users_setup.requests.get')
+    def testAccOpened(self, reqget, reqpost, psqlite):
         moccursor = mock.Mock()
         moccursor.fetchone.side_effect= [(3, 'dvrcic', 1, 1, 1, 'foo', 1, 1, 0)]
         mocconn = mock.Mock()
