@@ -5,7 +5,7 @@ import json
 import unittest2 as unittest
 
 from modules.log import Logger
-import isabella_users_setup
+import isabella_users_frontend_setup
 
 class ProjectsFeed(unittest.TestCase):
     def setUp(self):
@@ -103,29 +103,29 @@ class ProjectsFeed(unittest.TestCase):
             ]"""
 
     @unittest.skip('skip this')
-    @mock.patch('isabella_users_setup.requests.get')
+    @mock.patch('isabella_users_frontend_setup.requests.get')
     def testParseProjectsFeed(self, reqget):
         mocresp = mock.create_autospec(requests.Response)
         mocresp.json.return_value = json.loads(self.feed)
         reqget.return_value = mocresp
-        users = isabella_users_setup.fetch_newly_created_users(isabella_users_setup.conf_opts,
+        users = isabella_users_frontend_setup.fetch_newly_created_users(isabella_users_frontend_setup.conf_opts,
                                                                self.log)
         self.assertTrue(reqget.called)
         self.assertEqual(len(users), 3)
 
     @unittest.skip('skip this')
-    @mock.patch('isabella_users_setup.requests.post')
-    @mock.patch('isabella_users_setup.requests.get')
+    @mock.patch('isabella_users_frontend_setup.requests.post')
+    @mock.patch('isabella_users_frontend_setup.requests.get')
     def testMain(self, reqget, reqpost):
         mocresp = mock.create_autospec(requests.Response)
         mocresp.json.return_value = json.loads(self.feed)
         reqget.return_value = mocresp
-        isabella_users_setup.main()
+        isabella_users_frontend_setup.main()
 
     @unittest.skip('skip this')
-    @mock.patch('isabella_users_setup.sqlite3')
-    @mock.patch('isabella_users_setup.requests.post')
-    @mock.patch('isabella_users_setup.requests.get')
+    @mock.patch('isabella_users_frontend_setup.sqlite3')
+    @mock.patch('isabella_users_frontend_setup.requests.post')
+    @mock.patch('isabella_users_frontend_setup.requests.get')
     def testSubscribe(self, reqget, reqpost, psqlite):
         moccursor = mock.Mock()
         moccursor.fetchone.side_effect= [(0, 'hsute', 1, 1, 1, 'foo', 1, 0, 1),
@@ -137,18 +137,18 @@ class ProjectsFeed(unittest.TestCase):
         mocresp.json.return_value = json.loads(self.feed)
         reqget.return_value = mocresp
         psqlite.connect.return_value = mocconn
-        isabella_users_setup.main()
+        isabella_users_frontend_setup.main()
         if reqpost.mock_calls:
             self.assertEqual(reqpost.call_args_list[0][1]['data'], 'list=Isabella-dezurni&email=Hrvoje.Sute@srce.hr')
             self.assertEqual(reqpost.call_args_list[1][1]['data'], 'list=Isabella-dezurni&email=skala@irb.hr')
             self.assertEqual(reqpost.call_args_list[2][1]['data'], 'list=Isabella-dezurni&email=vpaar@phy.hr')
 
     # @unittest.skip('skip this')
-    @mock.patch('isabella_users_setup.sqlite3')
-    @mock.patch('isabella_users_setup.requests.post')
-    @mock.patch('isabella_users_setup.requests.get')
+    @mock.patch('isabella_users_frontend_setup.sqlite3')
+    @mock.patch('isabella_users_frontend_setup.requests.post')
+    @mock.patch('isabella_users_frontend_setup.requests.get')
     def testAccOpened(self, reqget, reqpost, psqlite):
-        password = isabella_users_setup.gen_password()
+        password = isabella_users_frontend_setup.gen_password()
         moccursor = mock.Mock()
         moccursor.fetchone.side_effect= [(3, 'dvrcic', 1, 1, 1, 'foo', 1, 1, 0), password]
         mocconn = mock.Mock()
@@ -157,27 +157,27 @@ class ProjectsFeed(unittest.TestCase):
         mocresp.json.return_value = json.loads(self.feedemail)
         reqget.return_value = mocresp
         psqlite.connect.return_value = mocconn
-        isabella_users_setup.main()
+        isabella_users_frontend_setup.main()
 
     @unittest.skip('skip this')
-    @mock.patch('isabella_users_setup.requests.get')
+    @mock.patch('isabella_users_frontend_setup.requests.get')
     def testUsername(self, reqget):
         mocresp = mock.create_autospec(requests.Response)
         mocresp.json.side_effect = [json.loads(self.bogususerfeed), json.loads(self.feed)]
         reqget.return_value = mocresp
-        users = isabella_users_setup.fetch_newly_created_users(isabella_users_setup.conf_opts,
+        users = isabella_users_frontend_setup.fetch_newly_created_users(isabella_users_frontend_setup.conf_opts,
                                                                self.log)
         userlist = list()
         for u in users:
-            userlist.append(isabella_users_setup.gen_username(u, self.log))
+            userlist.append(isabella_users_frontend_setup.gen_username(u, self.log))
 
         self.assertEqual(userlist, [None])
 
-        users = isabella_users_setup.fetch_newly_created_users(isabella_users_setup.conf_opts,
+        users = isabella_users_frontend_setup.fetch_newly_created_users(isabella_users_frontend_setup.conf_opts,
                                                                self.log)
 
 
         userlist = list()
         for u in users:
-            userlist.append(isabella_users_setup.gen_username(u, self.log))
+            userlist.append(isabella_users_frontend_setup.gen_username(u, self.log))
         self.assertEqual(userlist, ['hsute','skala','vpaar'])
