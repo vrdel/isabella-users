@@ -6,6 +6,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import yaml
 
 from base64 import b64encode
 
@@ -37,6 +38,12 @@ def fetch_newly_created_users(subscription, logger):
     return users
 
 
+def avail_users(stream):
+    users = set(stream.keys())
+
+    return users
+
+
 def gen_username(uid, logger):
     username = None
 
@@ -55,9 +62,30 @@ def gen_username(uid, logger):
 def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
-    import pdb; pdb.set_trace()  # XXX BREAKPOINT
 
     users = fetch_newly_created_users(conf_opts['external']['subscription'], logger)
+
+    streamusers = file(conf_opts['external']['isabellausersyaml'], 'r')
+    yusers = yaml.load(streamusers)
+    streammaxuid = file(conf_opts['external']['maxuidyaml'], 'r')
+    ymaxuid = yaml.load(streammaxuid)
+    maxuid = ymaxuid['uid_maximus']
+    yamlusers = avail_users(yusers['isabella_users'])
+
+    uid = maxuid
+    for u in users:
+        username = gen_username(u, logger)
+        if username in yamlusers:
+            continue
+        else:
+            uid += 1
+            newuser = dict(comment='{0} {1}, project'.format(u['ime'], u['prezime']),
+                           gid=conf_opts['settings']['gid'],
+                           shell=conf_opts['settings']['shell'],
+                           uid=uid)
+            print newuser
+
+
 
 if __name__ == '__main__':
     main()

@@ -12,7 +12,8 @@ def parse_config(logger=None):
         if config.read(conf):
             for section in config.sections():
                 if section.startswith('external'):
-                    confopts['external'] = ({'isabellausersyaml': config.get(section, 'isabellausersyaml')})
+                    confopts['external'] = ({'subscription': config.get(section, 'subscription')})
+                    confopts['external'].update({'isabellausersyaml': config.get(section, 'isabellausersyaml')})
                     confopts['external'].update({'crongiusersyaml': config.get(section, 'crongiusersyaml')})
                     confopts['external'].update({'maxuidyaml': config.get(section, 'maxuidyaml')})
                     confopts['external'].update({'backupdir': config.get(section, 'backupdir')})
