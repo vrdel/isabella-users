@@ -70,12 +70,33 @@ def backup_yaml(path, logger):
     except Exception as e:
         logger.error(e)
 
+
 def load_yaml(path, logger):
     try:
         stream = file(path, 'r')
         return yaml.load(stream)
 
     except yaml.YAMLError as e:
+        logger.error(e)
+
+
+def merge_users(old, new):
+    d = dict()
+    d.update(old)
+    d.update(new)
+
+    return d
+
+
+def write_yaml(path, data, logger):
+    try:
+        stream = file(path, 'r')
+        return yaml.dump(data, stream)
+
+    except yaml.YAMLError as e:
+        logger.error(e)
+
+    except Exception as e:
         logger.error(e)
 
 
@@ -91,6 +112,7 @@ def main():
     yamlusers = avail_users(yusers['isabella_users'])
 
     uid = maxuid
+    newyusers = dict()
     for u in users:
         username = gen_username(u, logger)
         if username in yamlusers:
@@ -101,11 +123,13 @@ def main():
                            gid=conf_opts['settings']['gid'],
                            shell=conf_opts['settings']['shell'],
                            uid=uid)
-            print newuser
+            newyusers.update({username: newuser})
 
     if uid != maxuid:
         backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
         backup_yaml(conf_opts['external']['maxuidyaml'], logger)
+        write_yaml(conf_opts['external']['isabellausersyaml'],
+                   merge_users(yusers['isabella_users'], newyusers), logger)
 
 
 if __name__ == '__main__':

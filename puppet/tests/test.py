@@ -112,12 +112,25 @@ class ProjectsFeed(unittest.TestCase):
                                        'uid': 10132,
                                        'gid': 501}}
 
+        self.newyusers = {u'vpaar': {'comment': 'Vladimir Paar, project',
+                                     'shell': '/bin/bash',
+                                     'gid': 501L,
+                                     'uid': 10184},
+                          u'skala': {'comment': 'Karolj Skala, project',
+                                     'shell': '/bin/bash',
+                                     'gid': 501L,
+                                     'uid': 10183},
+                          u'hsute': {'comment': 'Hrvoje Sute, project',
+                                     'shell': '/bin/bash',
+                                     'gid': 501L,
+                                    'uid': 10182}}
 
+    @mock.patch('isabella_users_puppet_setup.write_yaml')
     @mock.patch('isabella_users_puppet_setup.avail_users')
     @mock.patch('isabella_users_puppet_setup.backup_yaml')
     @mock.patch('isabella_users_puppet_setup.requests.post')
     @mock.patch('isabella_users_puppet_setup.requests.get')
-    def testYamls(self, reqget, reqpost, mockbackyaml, mockavailusers):
+    def testYamls(self, reqget, reqpost, mockbackyaml, mockavailusers, mockwriteyaml):
         mocresp = mock.create_autospec(requests.Response)
         mocresp.json.return_value = json.loads(self.feed)
         co = {'external': dict()}
@@ -131,11 +144,15 @@ class ProjectsFeed(unittest.TestCase):
         isabella_users_puppet_setup.main.func_globals['conf_opts'] = co
         isabella_users_puppet_setup.main()
         mockavailusers.assert_called_with(self.yamlusers)
+        merged = dict()
+        merged.update(self.yamlusers)
+        merged.update(self.newyusers)
+        self.assertEqual(mockwriteyaml.call_args_list[0][0][1], merged)
 
-
+    @mock.patch('isabella_users_puppet_setup.write_yaml')
     @mock.patch('isabella_users_puppet_setup.requests.post')
     @mock.patch('isabella_users_puppet_setup.requests.get')
-    def testMain(self, reqget, reqpost):
+    def testMain(self, reqget, reqpost, mockwriteyaml):
         mocresp = mock.create_autospec(requests.Response)
         mocresp.json.return_value = json.loads(self.feed)
         reqget.return_value = mocresp
