@@ -7,6 +7,7 @@ import sqlite3
 import subprocess
 import sys
 import yaml
+import shutil
 
 from base64 import b64encode
 
@@ -59,6 +60,17 @@ def gen_username(uid, logger):
     return username
 
 
+def backup_yaml(path, logger):
+    try:
+        shutil.copy(path, conf_opts['external']['backupdir'])
+
+    except shutil.Error as e:
+        logger.error(e)
+
+    except Exception as e:
+        logger.error(e)
+
+
 def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
@@ -85,6 +97,9 @@ def main():
                            uid=uid)
             print newuser
 
+    if uid != maxuid:
+        backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
+        backup_yaml(conf_opts['external']['maxuidyaml'], logger)
 
 
 if __name__ == '__main__':
