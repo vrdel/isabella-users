@@ -101,6 +101,36 @@ class ProjectsFeed(unittest.TestCase):
                     }
                 ]}
             ]"""
+        self.yamlusers = {'abaresic': {'comment': 'Anja Baresic, 5467',
+                                       'home': '/home/abaresic',
+                                       'shell': '/bin/bash',
+                                       'uid': 10181,
+                                       'gid': 501},
+                          'aaleksic': {'comment': 'Arijan Aleksic, 000-0000000-0004',
+                                       'home': '/home/aaleksic',
+                                       'shell': '/bin/bash',
+                                       'uid': 10132,
+                                       'gid': 501}}
+
+
+    @mock.patch('isabella_users_puppet_setup.avail_users')
+    @mock.patch('isabella_users_puppet_setup.backup_yaml')
+    @mock.patch('isabella_users_puppet_setup.requests.post')
+    @mock.patch('isabella_users_puppet_setup.requests.get')
+    def testYamls(self, reqget, reqpost, mockbackyaml, mockavailusers):
+        mocresp = mock.create_autospec(requests.Response)
+        mocresp.json.return_value = json.loads(self.feed)
+        co = {'external': dict()}
+        co.update({'settings': dict()})
+        co['external']['isabellausersyaml'] = 'tests/isabellausers.yaml'
+        co['external']['maxuidyaml'] = 'tests/isab_cro_maximus.yaml'
+        co['external']['subscription'] = 'https://161.53.254.158:8443/croisab/api/isabella/projects'
+        co['settings']['gid'] = 501L
+        co['settings']['shell'] = '/bin/bash'
+        reqget.return_value = mocresp
+        isabella_users_puppet_setup.main.func_globals['conf_opts'] = co
+        isabella_users_puppet_setup.main()
+        mockavailusers.assert_called_with(self.yamlusers)
 
 
     @mock.patch('isabella_users_puppet_setup.requests.post')
@@ -110,4 +140,3 @@ class ProjectsFeed(unittest.TestCase):
         mocresp.json.return_value = json.loads(self.feed)
         reqget.return_value = mocresp
         isabella_users_puppet_setup.main()
-

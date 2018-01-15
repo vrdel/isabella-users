@@ -70,6 +70,14 @@ def backup_yaml(path, logger):
     except Exception as e:
         logger.error(e)
 
+def load_yaml(path, logger):
+    try:
+        stream = file(path, 'r')
+        return yaml.load(stream)
+
+    except yaml.YAMLError as e:
+        logger.error(e)
+
 
 def main():
     lobj = Logger(sys.argv[0])
@@ -77,10 +85,8 @@ def main():
 
     users = fetch_newly_created_users(conf_opts['external']['subscription'], logger)
 
-    streamusers = file(conf_opts['external']['isabellausersyaml'], 'r')
-    yusers = yaml.load(streamusers)
-    streammaxuid = file(conf_opts['external']['maxuidyaml'], 'r')
-    ymaxuid = yaml.load(streammaxuid)
+    yusers = load_yaml(conf_opts['external']['isabellausersyaml'], logger)
+    ymaxuid = load_yaml(conf_opts['external']['maxuidyaml'], logger)
     maxuid = ymaxuid['uid_maximus']
     yamlusers = avail_users(yusers['isabella_users'])
 
