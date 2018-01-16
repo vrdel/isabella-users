@@ -100,6 +100,10 @@ def write_yaml(path, data, logger):
         logger.error(e)
 
 
+def max_uid(stream):
+    return stream['uid_maximus']
+
+
 def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
@@ -108,7 +112,7 @@ def main():
 
     yusers = load_yaml(conf_opts['external']['isabellausersyaml'], logger)
     ymaxuid = load_yaml(conf_opts['external']['maxuidyaml'], logger)
-    maxuid = ymaxuid['uid_maximus']
+    maxuid = max_uid(ymaxuid)
     yamlusers = avail_users(yusers['isabella_users'])
 
     uid = maxuid
@@ -130,6 +134,8 @@ def main():
         backup_yaml(conf_opts['external']['maxuidyaml'], logger)
         write_yaml(conf_opts['external']['isabellausersyaml'],
                    merge_users(yusers['isabella_users'], newyusers), logger)
+        newymaxuid = dict(uid_maximus=uid)
+        write_yaml(conf_opts['external']['isabellausersyaml'], newymaxuid, logger)
 
 
 if __name__ == '__main__':

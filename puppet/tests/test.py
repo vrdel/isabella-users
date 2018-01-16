@@ -111,7 +111,6 @@ class ProjectsFeed(unittest.TestCase):
                                        'shell': '/bin/bash',
                                        'uid': 10132,
                                        'gid': 501}}
-
         self.newyusers = {u'vpaar': {'comment': 'Vladimir Paar, project',
                                      'shell': '/bin/bash',
                                      'gid': 501L,
@@ -124,13 +123,17 @@ class ProjectsFeed(unittest.TestCase):
                                      'shell': '/bin/bash',
                                      'gid': 501L,
                                     'uid': 10182}}
+        self.uidmax = {'uid_maximus': 10181}
+        self.newuidmax = {'uid_maximus': 10184}
 
+    @mock.patch('isabella_users_puppet_setup.max_uid')
     @mock.patch('isabella_users_puppet_setup.write_yaml')
     @mock.patch('isabella_users_puppet_setup.avail_users')
     @mock.patch('isabella_users_puppet_setup.backup_yaml')
     @mock.patch('isabella_users_puppet_setup.requests.post')
     @mock.patch('isabella_users_puppet_setup.requests.get')
-    def testYamls(self, reqget, reqpost, mockbackyaml, mockavailusers, mockwriteyaml):
+    def testYamls(self, reqget, reqpost, mockbackyaml, mockavailusers,
+                  mockwriteyaml, mockmaxuid):
         mocresp = mock.create_autospec(requests.Response)
         mocresp.json.return_value = json.loads(self.feed)
         co = {'external': dict()}
@@ -141,6 +144,7 @@ class ProjectsFeed(unittest.TestCase):
         co['settings']['gid'] = 501L
         co['settings']['shell'] = '/bin/bash'
         reqget.return_value = mocresp
+        mockmaxuid.side_effect = [10181, 10184, 10183, 10182]
         isabella_users_puppet_setup.main.func_globals['conf_opts'] = co
         isabella_users_puppet_setup.main()
         mockavailusers.assert_called_with(self.yamlusers)
@@ -148,6 +152,9 @@ class ProjectsFeed(unittest.TestCase):
         merged.update(self.yamlusers)
         merged.update(self.newyusers)
         self.assertEqual(mockwriteyaml.call_args_list[0][0][1], merged)
+        self.assertEqual(mockwriteyaml.call_args_list[1][0][1], self.newuidmax)
+        self.assertEqual(mockmaxuid.call_args_list[0][0][0], self.uidmax)
+
 
     @mock.patch('isabella_users_puppet_setup.write_yaml')
     @mock.patch('isabella_users_puppet_setup.requests.post')
