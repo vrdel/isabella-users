@@ -111,9 +111,11 @@ def main():
     users = fetch_newly_created_users(conf_opts['external']['subscription'], logger)
 
     yusers = load_yaml(conf_opts['external']['isabellausersyaml'], logger)
+    ycrongiusers = load_yaml(conf_opts['external']['crongiusersyaml'], logger)
     ymaxuid = load_yaml(conf_opts['external']['maxuidyaml'], logger)
     maxuid = max_uid(ymaxuid)
     yamlusers = avail_users(yusers['isabella_users'])
+    yamlcrongiusers = avail_users(ycrongiusers['crongi_users'])
 
     uid = maxuid
     newyusers = dict()
@@ -121,6 +123,8 @@ def main():
         username = gen_username(u, logger)
         if username in yamlusers:
             continue
+        elif username in yamlcrongiusers:
+            pass
         else:
             uid += 1
             newuser = dict(comment='{0} {1}, project'.format(u['ime'], u['prezime']),
