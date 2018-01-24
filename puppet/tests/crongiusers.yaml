@@ -1,0 +1,20 @@
+---
+crongi_users:
+  ababic:
+    comment: Ana Babic
+    gid: 501
+    home: /home/ababic
+    shell: /bin/bash
+    uid: 633
+  agudyma:
+    comment: Andrii Gudyma
+    gid: 501
+    home: /home/agudyma
+    shell: /bin/bash
+    uid: 10207
+  abaresic:
+    comment: Anja Baresic
+    gid: 501
+    home: /home/abaresic
+    shell: /bin/bash
+    uid: 10183
