@@ -124,7 +124,11 @@ def main():
         if username in yamlusers:
             continue
         elif username in yamlcrongiusers:
-            pass
+            newuser = dict(comment='{0} {1}, project'.format(u['ime'], u['prezime']),
+                           gid=conf_opts['settings']['gid'],
+                           shell=conf_opts['settings']['shell'],
+                           uid=yamlcrongiusers[username]['uid'])
+            newyusers.update({username: newuser})
         else:
             uid += 1
             newuser = dict(comment='{0} {1}, project'.format(u['ime'], u['prezime']),
