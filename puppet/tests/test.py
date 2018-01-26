@@ -12,7 +12,52 @@ class ProjectsFeed(unittest.TestCase):
         log = Logger('test')
         self.log = log.get()
         self.feed = \
-            """[{
+            """[
+                {
+                "id": 109,
+                "sifra": "Foo-2018",
+                "status_id": "1",
+                "date_from": "2018-01-01",
+                "date_to": "2018-05-15",
+                "users": [
+                    {
+                        "id": 376,
+                        "uid": "tstilino@srce.hr",
+                        "ime": "Tomislav",
+                        "prezime": "Stilinovic",
+                        "mail": "Tomislav.Stilinovic@srce.hr",
+                        "status_id": "1",
+                        "pivot": {
+                            "project_id": "109",
+                            "osoba_id": "376"
+                        }
+                    },
+                    {
+                        "id": 377,
+                        "uid": "eimamagi@srce.hr",
+                        "ime": "Emir",
+                        "prezime": "Imamagic",
+                        "mail": "Emir.Imamagic@srce.hr",
+                        "status_id": "1",
+                        "pivot": {
+                            "project_id": "109",
+                            "osoba_id": "377"
+                        }
+                    },
+                    {
+                        "id": 378,
+                        "uid": "tdomazet@irb.hr",
+                        "ime": "Tomislav",
+                        "prezime": "Domazet",
+                        "mail": "tdomazet@irb.hr",
+                        "status_id": "1",
+                        "pivot": {
+                            "project_id": "109",
+                            "osoba_id": "378"
+                        }
+                    }]
+                },
+                {
                 "id": 108,
                 "sifra": "API-2017",
                 "status_id": "1",
@@ -54,9 +99,9 @@ class ProjectsFeed(unittest.TestCase):
                             "project_id": "108",
                             "osoba_id": "12"
                         }
-                    }
-                ]
-            }]"""
+                    }]
+                }
+               ]"""
         self.yamlusers = {'abaresic': {'comment': 'Anja Baresic, 5467',
                                        'home': '/home/abaresic',
                                        'shell': '/bin/bash',
@@ -103,6 +148,7 @@ class ProjectsFeed(unittest.TestCase):
         self.uidmax = {'uid_maximus': 10181}
         self.newuidmax = {'uid_maximus': 10183}
 
+    # @unittest.skip('skip this')
     @mock.patch('isabella_users_puppet_setup.max_uid')
     @mock.patch('isabella_users_puppet_setup.write_yaml')
     @mock.patch('isabella_users_puppet_setup.avail_users')

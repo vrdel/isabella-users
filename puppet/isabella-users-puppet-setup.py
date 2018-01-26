@@ -19,7 +19,8 @@ conf_opts = parse_config()
 
 
 def fetch_newly_created_users(subscription, logger):
-    users = None
+    inactive_users = dict()
+    users = list()
 
     try:
         response = requests.get(subscription, timeout=connection_timeout, verify=False)
@@ -28,7 +29,14 @@ def fetch_newly_created_users(subscription, logger):
 
         for p in projects:
             if p.get('users', None):
-                users = [u for u in p['users']]
+                for u in p['users']:
+                    users.append(u)
+                    user = gen_username(u, logger)
+                    if user in inactive_users:
+                        inactive_users[user].append(u['status_id'])
+                    else:
+                        inactive_users[user] = list()
+                        inactive_users[user].append(int(u['status_id']))
 
     except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
         logger.error('requests error: %s' % e)
