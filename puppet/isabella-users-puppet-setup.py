@@ -17,10 +17,19 @@ from isabella_users_puppet.log import Logger
 connection_timeout = 120
 conf_opts = parse_config()
 
+def find_inactive_users(statuses):
+    inactive = list()
+
+    for u, s in statuses.iteritems():
+        bools = map(lambda t: t == 1, s)
+        if not all(bools):
+            inactive.append(u)
+
+    return inactive
 
 def fetch_newly_created_users(subscription, logger):
-    inactive_users = dict()
-    users = list()
+    statuses_users = dict()
+    users = dict()
 
     try:
         response = requests.get(subscription, timeout=connection_timeout, verify=False)
@@ -30,13 +39,14 @@ def fetch_newly_created_users(subscription, logger):
         for p in projects:
             if p.get('users', None):
                 for u in p['users']:
-                    users.append(u)
                     user = gen_username(u, logger)
-                    if user in inactive_users:
-                        inactive_users[user].append(u['status_id'])
+                    if user not in users:
+                        users[user] = u
+                    if user in statuses_users:
+                        statuses_users[user].append(int(u['status_id']))
                     else:
-                        inactive_users[user] = list()
-                        inactive_users[user].append(int(u['status_id']))
+                        statuses_users[user] = list()
+                        statuses_users[user].append(int(u['status_id']))
 
     except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
         logger.error('requests error: %s' % e)
@@ -44,7 +54,8 @@ def fetch_newly_created_users(subscription, logger):
     except Exception as e:
         logger.error(e)
 
-    return users
+    import pdb; pdb.set_trace()  # XXX BREAKPOINT
+    return users.values(), find_inactive_users(statuses_users)
 
 
 def avail_users(stream):
@@ -116,7 +127,7 @@ def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
 
-    users = fetch_newly_created_users(conf_opts['external']['subscription'], logger)
+    users, inactive = fetch_newly_created_users(conf_opts['external']['subscription'], logger)
 
     yusers = load_yaml(conf_opts['external']['isabellausersyaml'], logger)
     ycrongiusers = load_yaml(conf_opts['external']['crongiusersyaml'], logger)

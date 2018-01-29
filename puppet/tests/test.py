@@ -55,6 +55,18 @@ class ProjectsFeed(unittest.TestCase):
                             "project_id": "109",
                             "osoba_id": "378"
                         }
+                    },
+                    {
+                        "id": 12,
+                        "uid": "vpaar@phy.hr",
+                        "ime": "Vladimir",
+                        "prezime": "Paar",
+                        "mail": "vpaar@phy.hr",
+                        "status_id": "4",
+                        "pivot": {
+                            "project_id": "109",
+                            "osoba_id": "12"
+                        }
                     }]
                 },
                 {
@@ -123,7 +135,7 @@ class ProjectsFeed(unittest.TestCase):
                           u'skala': {'comment': 'Karolj Skala, project',
                                      'shell': '/bin/bash',
                                      'gid': 501L,
-                                     'uid': 10185},
+                                     'uid': 10186},
                           u'tdomazet': {'comment': 'Tomislav Domazet, project',
                                      'shell': '/bin/bash',
                                      'gid': 501L,
@@ -135,7 +147,7 @@ class ProjectsFeed(unittest.TestCase):
                           u'vpaar': {'comment': 'Vladimir Paar, project',
                                      'shell': '/bin/bash',
                                      'gid': 501L,
-                                     'uid': 10186}}
+                                     'uid': 10185}}
         self.crongiusers = {'ababic': {'comment': 'Ana Babic',
                                        'gid': 501,
                                        'home': '/home/ababic',
@@ -155,10 +167,20 @@ class ProjectsFeed(unittest.TestCase):
                                         'shell': '/bin/bash',
                                         'gid': 501L,
                                         'uid': 502}}
-
-
         self.uidmax = {'uid_maximus': 10181}
         self.newuidmax = {'uid_maximus': 10186}
+
+
+    def testInactiveUsers(self):
+        statuses_users = {u'eimamagi': [1],
+                          u'hsute': [1],
+                          u'skala': [1],
+                          u'tdomazet': [1],
+                          u'tstilino': [1],
+                          u'vpaar': [4, 2]}
+        inactive = isabella_users_puppet_setup.find_inactive_users(dict(statuses_users))
+        self.assertEqual(inactive, ['vpaar'])
+
 
     # @unittest.skip('skip this')
     @mock.patch('isabella_users_puppet_setup.max_uid')
@@ -167,7 +189,7 @@ class ProjectsFeed(unittest.TestCase):
     @mock.patch('isabella_users_puppet_setup.backup_yaml')
     @mock.patch('isabella_users_puppet_setup.requests.post')
     @mock.patch('isabella_users_puppet_setup.requests.get')
-    def testYamls(self, reqget, reqpost, mockbackyaml, mockavailusers,
+    def testMainLogic(self, reqget, reqpost, mockbackyaml, mockavailusers,
                   mockwriteyaml, mockmaxuid):
         mocresp = mock.create_autospec(requests.Response)
         mocresp.json.return_value = json.loads(self.feed)
@@ -180,7 +202,7 @@ class ProjectsFeed(unittest.TestCase):
         co['settings']['gid'] = 501L
         co['settings']['shell'] = '/bin/bash'
         reqget.return_value = mocresp
-        mockmaxuid.side_effect = [10181, 10183, 10182]
+        mockmaxuid.return_value = 10181
         mockavailusers.side_effect = [self.yamlusers, self.crongiusers]
         isabella_users_puppet_setup.main.func_globals['conf_opts'] = co
         isabella_users_puppet_setup.main()
@@ -190,14 +212,3 @@ class ProjectsFeed(unittest.TestCase):
         self.assertEqual(mockwriteyaml.call_args_list[0][0][1], merged)
         self.assertEqual(mockwriteyaml.call_args_list[1][0][1], self.newuidmax)
         self.assertEqual(mockmaxuid.call_args_list[0][0][0], self.uidmax)
-
-
-    @unittest.skip('skip this')
-    @mock.patch('isabella_users_puppet_setup.write_yaml')
-    @mock.patch('isabella_users_puppet_setup.requests.post')
-    @mock.patch('isabella_users_puppet_setup.requests.get')
-    def testMain(self, reqget, reqpost, mockwriteyaml):
-        mocresp = mock.create_autospec(requests.Response)
-        mocresp.json.return_value = json.loads(self.feed)
-        reqget.return_value = mocresp
-        isabella_users_puppet_setup.main()
