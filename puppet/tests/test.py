@@ -112,18 +112,30 @@ class ProjectsFeed(unittest.TestCase):
                                        'shell': '/bin/bash',
                                        'uid': 10132,
                                        'gid': 501}}
-        self.newyusers = {u'vpaar': {'comment': 'Vladimir Paar, project',
-                                     'shell': '/bin/bash',
-                                     'gid': 501L,
-                                     'uid': 10183},
-                          u'skala': {'comment': 'Karolj Skala, project',
-                                     'shell': '/bin/bash',
-                                     'gid': 501L,
-                                     'uid': 10182},
+        self.newyusers = {u'eimamagi': {'comment': 'Emir Imamagic, project',
+                                        'shell': '/bin/bash',
+                                        'gid': 501L,
+                                        'uid': 10183},
                           u'hsute': {'comment': 'Hrvoje Sute, project',
                                      'shell': '/bin/bash',
                                      'gid': 501L,
-                                     'uid': 502}}
+                                     'uid': 502},
+                          u'skala': {'comment': 'Karolj Skala, project',
+                                     'shell': '/bin/bash',
+                                     'gid': 501L,
+                                     'uid': 10185},
+                          u'tdomazet': {'comment': 'Tomislav Domazet, project',
+                                     'shell': '/bin/bash',
+                                     'gid': 501L,
+                                     'uid': 10184},
+                          u'tstilino': {'comment': 'Tomislav Stilinovic, project',
+                                     'shell': '/bin/bash',
+                                     'gid': 501L,
+                                     'uid': 10182},
+                          u'vpaar': {'comment': 'Vladimir Paar, project',
+                                     'shell': '/bin/bash',
+                                     'gid': 501L,
+                                     'uid': 10186}}
         self.crongiusers = {'ababic': {'comment': 'Ana Babic',
                                        'gid': 501,
                                        'home': '/home/ababic',
@@ -146,7 +158,7 @@ class ProjectsFeed(unittest.TestCase):
 
 
         self.uidmax = {'uid_maximus': 10181}
-        self.newuidmax = {'uid_maximus': 10183}
+        self.newuidmax = {'uid_maximus': 10186}
 
     # @unittest.skip('skip this')
     @mock.patch('isabella_users_puppet_setup.max_uid')
