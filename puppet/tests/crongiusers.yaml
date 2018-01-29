@@ -17,4 +17,10 @@ crongi_users:
     gid: 501
     home: /home/abaresic
     shell: /bin/bash
-    uid: 10183
+    uid: 634
+  hsute:
+    comment: Hrvoje Sute
+    gid: 501
+    home: /home/hsute
+    shell: /bin/bash
+    uid: 502

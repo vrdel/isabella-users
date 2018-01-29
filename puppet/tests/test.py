@@ -163,10 +163,11 @@ class ProjectsFeed(unittest.TestCase):
                                         'home': '/home/agudyma',
                                         'shell': '/bin/bash',
                                         'uid': 10207},
-                            'hsute': {'comment': 'Hrvoje Sute, project',
-                                        'shell': '/bin/bash',
-                                        'gid': 501L,
-                                        'uid': 502}}
+                            'hsute': {'comment': 'Hrvoje Sute',
+                                      'gid': 501,
+                                      'home': '/home/hsute',
+                                      'shell': '/bin/bash',
+                                      'uid': 502}}
         self.uidmax = {'uid_maximus': 10181}
         self.newuidmax = {'uid_maximus': 10186}
 
@@ -182,7 +183,16 @@ class ProjectsFeed(unittest.TestCase):
         self.assertEqual(inactive, ['vpaar'])
 
 
-    # @unittest.skip('skip this')
+    def testParseYaml(self):
+        parsed_isabella = isabella_users_puppet_setup.load_yaml('tests/isabellausers.yaml', self.log)
+        self.assertTrue('isabella_users' in parsed_isabella)
+        self.assertEqual(parsed_isabella['isabella_users'], self.yamlusers)
+
+        parsed_crongi = isabella_users_puppet_setup.load_yaml('tests/crongiusers.yaml', self.log)
+        self.assertTrue('crongi_users' in parsed_crongi)
+        self.assertEqual(parsed_crongi['crongi_users'], self.crongiusers)
+
+
     @mock.patch('isabella_users_puppet_setup.max_uid')
     @mock.patch('isabella_users_puppet_setup.write_yaml')
     @mock.patch('isabella_users_puppet_setup.avail_users')
@@ -203,7 +213,7 @@ class ProjectsFeed(unittest.TestCase):
         co['settings']['shell'] = '/bin/bash'
         reqget.return_value = mocresp
         mockmaxuid.return_value = 10181
-        mockavailusers.side_effect = [self.yamlusers, self.crongiusers]
+        mockavailusers.side_effect = [isabella_users_puppet_setup.load_yaml(co['external']['isabellausersyaml'], self.log), self.crongiusers]
         isabella_users_puppet_setup.main.func_globals['conf_opts'] = co
         isabella_users_puppet_setup.main()
         merged = dict()
