@@ -21,6 +21,18 @@ class ProjectsFeed(unittest.TestCase):
                 "date_to": "2018-05-15",
                 "users": [
                     {
+                        "id": 375,
+                        "uid": "abaresic@mef.hr",
+                        "ime": "Anja",
+                        "prezime": "Baresic",
+                        "mail": "Anja.Baresic@mef.hr",
+                        "status_id": "4",
+                        "pivot": {
+                            "project_id": "109",
+                            "osoba_id": "375"
+                        }
+                    },
+                    {
                         "id": 376,
                         "uid": "tstilino@srce.hr",
                         "ime": "Tomislav",
@@ -117,7 +129,7 @@ class ProjectsFeed(unittest.TestCase):
         self.yamlusers = {'abaresic': {'comment': 'Anja Baresic, 5467',
                                        'home': '/home/abaresic',
                                        'shell': '/bin/bash',
-                                       'uid': 10181,
+                                       'uid': 634,
                                        'gid': 501},
                           'aaleksic': {'comment': 'Arijan Aleksic, 000-0000000-0004',
                                        'home': '/home/aaleksic',
@@ -145,7 +157,7 @@ class ProjectsFeed(unittest.TestCase):
                                      'gid': 501L,
                                      'uid': 10182},
                           u'vpaar': {'comment': 'Vladimir Paar, project',
-                                     'shell': '/bin/bash',
+                                     'shell': '/sbin/nologin',
                                      'gid': 501L,
                                      'uid': 10185}}
         self.crongiusers = {'ababic': {'comment': 'Ana Babic',
@@ -173,14 +185,15 @@ class ProjectsFeed(unittest.TestCase):
 
 
     def testInactiveUsers(self):
-        statuses_users = {u'eimamagi': [1],
+        statuses_users = {u'abaresic': [4],
+                          u'eimamagi': [1],
                           u'hsute': [1],
                           u'skala': [1],
                           u'tdomazet': [1],
                           u'tstilino': [1],
                           u'vpaar': [4, 2]}
         inactive = isabella_users_puppet_setup.find_inactive_users(dict(statuses_users))
-        self.assertEqual(inactive, ['vpaar'])
+        self.assertEqual(inactive, ['abaresic', 'vpaar'])
 
 
     def testParseYaml(self):
@@ -213,11 +226,13 @@ class ProjectsFeed(unittest.TestCase):
         co['settings']['shell'] = '/bin/bash'
         reqget.return_value = mocresp
         mockmaxuid.return_value = 10181
-        mockavailusers.side_effect = [isabella_users_puppet_setup.load_yaml(co['external']['isabellausersyaml'], self.log), self.crongiusers]
+        yamlusers = isabella_users_puppet_setup.load_yaml(co['external']['isabellausersyaml'], self.log)['isabella_users']
+        crongiusers = isabella_users_puppet_setup.load_yaml(co['external']['crongiusersyaml'], self.log)['crongi_users']
+        mockavailusers.side_effect = [yamlusers, crongiusers]
         isabella_users_puppet_setup.main.func_globals['conf_opts'] = co
         isabella_users_puppet_setup.main()
         merged = dict()
-        merged.update(self.yamlusers)
+        merged.update(yamlusers)
         merged.update(self.newyusers)
         self.assertEqual(mockwriteyaml.call_args_list[0][0][1], merged)
         self.assertEqual(mockwriteyaml.call_args_list[1][0][1], self.newuidmax)

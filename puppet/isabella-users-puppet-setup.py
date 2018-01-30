@@ -17,6 +17,7 @@ from isabella_users_puppet.log import Logger
 connection_timeout = 120
 conf_opts = parse_config()
 
+
 def find_inactive_users(statuses):
     inactive = list()
 
@@ -26,6 +27,7 @@ def find_inactive_users(statuses):
             inactive.append(u)
 
     return inactive
+
 
 def fetch_newly_created_users(subscription, logger):
     statuses_users = dict()
@@ -54,7 +56,6 @@ def fetch_newly_created_users(subscription, logger):
     except Exception as e:
         logger.error(e)
 
-    import pdb; pdb.set_trace()  # XXX BREAKPOINT
     return users.values(), find_inactive_users(statuses_users)
 
 
@@ -141,6 +142,8 @@ def main():
     for u in users:
         username = gen_username(u, logger)
         if username in yamlusers:
+            if username in inactive:
+                yamlusers[username]['shell'] = '/sbin/nologin'
             continue
         elif username in yamlcrongiusers:
             newuser = dict(comment='{0} {1}, project'.format(u['ime'], u['prezime']),
@@ -150,9 +153,10 @@ def main():
             newyusers.update({username: newuser})
         else:
             uid += 1
+            shell = conf_opts['settings']['shell'] if username not in inactive else '/sbin/nologin'
             newuser = dict(comment='{0} {1}, project'.format(u['ime'], u['prezime']),
                            gid=conf_opts['settings']['gid'],
-                           shell=conf_opts['settings']['shell'],
+                           shell=shell,
                            uid=uid)
             newyusers.update({username: newuser})
 
@@ -160,7 +164,7 @@ def main():
         backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
         backup_yaml(conf_opts['external']['maxuidyaml'], logger)
         write_yaml(conf_opts['external']['isabellausersyaml'],
-                   merge_users(yusers['isabella_users'], newyusers), logger)
+                   merge_users(yamlusers, newyusers), logger)
         newymaxuid = dict(uid_maximus=uid)
         write_yaml(conf_opts['external']['isabellausersyaml'], newymaxuid, logger)
 
