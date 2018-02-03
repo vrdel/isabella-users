@@ -1,15 +1,9 @@
 #!/usr/bin/python
 
-import os
 import requests
 import shutil
-import sqlite3
-import subprocess
 import sys
 import yaml
-import shutil
-
-from base64 import b64encode
 
 from isabella_users_puppet.config import parse_config
 from isabella_users_puppet.log import Logger
@@ -72,7 +66,7 @@ def gen_username(uid, logger):
         if '@' in uid['uid']:
             username = uid['uid'].split('@')[0]
         else:
-            logger.warning('Wrong uid: %s' % uid['uid'])
+            logger.warning("Wrong uid: %s" % uid['uid'])
 
     except Exception as e:
         logger.error(e)
@@ -144,6 +138,7 @@ def main():
         if username in yamlusers:
             if username in inactive:
                 yamlusers[username]['shell'] = '/sbin/nologin'
+                logger.info("Disabled user: %s"  % username)
             continue
         elif username in yamlcrongiusers:
             newuser = dict(comment='{0} {1}, project'.format(u['ime'], u['prezime']),
@@ -167,6 +162,8 @@ def main():
                    merge_users(yamlusers, newyusers), logger)
         newymaxuid = dict(uid_maximus=uid)
         write_yaml(conf_opts['external']['isabellausersyaml'], newymaxuid, logger)
+        addedusers = ', '.join(newyusers.keys())
+        logger.info("Added users: %s" % addedusers)
 
 
 if __name__ == '__main__':
