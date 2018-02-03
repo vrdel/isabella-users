@@ -196,6 +196,13 @@ class ProjectsFeed(unittest.TestCase):
         self.assertEqual(inactive, ['abaresic', 'vpaar'])
 
 
+    def testGenUsername(self):
+        uid = {'uid': 'hsute@srce.hr'}
+
+        username = isabella_users_puppet_setup.gen_username(uid, self.log)
+        self.assertEqual('hsute', username)
+
+
     def testParseYaml(self):
         parsed_isabella = isabella_users_puppet_setup.load_yaml('tests/isabellausers.yaml', self.log)
         self.assertTrue('isabella_users' in parsed_isabella)
