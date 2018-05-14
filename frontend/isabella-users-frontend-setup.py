@@ -24,17 +24,20 @@ def gen_password():
     return b64encode(s)[:30]
 
 
-def fetch_newly_created_users(subscription, logger):
+def fetch_users(subscription, logger):
     users = None
 
     try:
         response = requests.get(subscription, timeout=connection_timeout, verify=False)
         response.raise_for_status()
+        users = dict()
         projects = response.json()
 
         for p in projects:
             if p.get('users', None):
-                users = [u for u in p['users']]
+                for e in [u for u in p['users']]:
+                    if e['id'] not in users:
+                        users[e['id']] = e
 
     except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
         logger.error('requests error: %s' % e)
@@ -42,7 +45,7 @@ def fetch_newly_created_users(subscription, logger):
     except Exception as e:
         logger.error(e)
 
-    return users
+    return users.values()
 
 
 def gen_username(uid, logger):
@@ -93,7 +96,7 @@ def create_homedir(dir, uid, gid, logger):
 
 def subscribe_maillist(token, name, email, username, logger):
     try:
-        headers, payload = {}, {}
+        headers, payload = dict(), dict()
 
         headers = requests.utils.default_headers()
         headers.update({'content-type': 'application/x-www-form-urlencoded'})
@@ -117,7 +120,7 @@ def main():
     logger = lobj.get()
 
     usertool = UserUtils(logger)
-    users = fetch_newly_created_users(conf_opts['external']['subscription'], logger)
+    users = fetch_users(conf_opts['external']['subscription'], logger)
 
     email_info = dict()
 
