@@ -11,7 +11,7 @@ import csv
 import yaml
 
 from sqlalchemy import create_engine
-from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Date, select
+from sqlalchemy import Table, Column, Integer, String, Unicode, MetaData, ForeignKey, Date, select
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref
 from sqlalchemy.orm.exc import NoResultFound
@@ -35,11 +35,11 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     feedid = Column(Integer)
-    username = Column(String)
-    name = Column(String)
-    surname = Column(String)
-    mail = Column(String)
-    projects = relationship("Projects", secondary="assign")
+    username = Column(Unicode(8))
+    name = Column(Unicode(20))
+    surname = Column(Unicode(40))
+    mail = Column(Unicode(60))
+    projects = relationship("Projects", secondary="assign", backref=backref('users', order_by=id))
 
     def __init__(self, feedid, username, name, surname, mail):
         self.feedid = feedid
@@ -53,19 +53,23 @@ class Projects(Base):
     __tablename__ = 'projects'
 
     id = Column(Integer, primary_key=True)
-    idproj = Column(String)
+    idproj = Column(Unicode(40))
     feedid = Column(Integer)
-    name = Column(String)
+    name = Column(Unicode(180))
+    respname = Column(Unicode(20))
+    respemail = Column(Unicode(60))
     status = Column(Integer)
-    institution = Column(String)
+    institution = Column(Unicode(180))
     date_created = Column(Date)
     date_from = Column(Date)
     date_to = Column(Date)
 
-    def __init__(self, feedid, idproj, name, status, institution, date_created,
-                 date_from, date_to):
+    def __init__(self, feedid, idproj, name, respname, respemail, status,
+                 institution, date_created, date_from, date_to):
         self.feedid = feedid
         self.idproj = idproj
+        self.respname = respname
+        self.respemail = respemail
         self.name = name
         self.status = status
         self.institution = institution
@@ -89,6 +93,8 @@ def load_csv(csvfile):
 
         return lines
 
+def to_unicode(s):
+    return unicode(s, 'utf-8')
 
 def main():
     parser = argparse.ArgumentParser(description="Isabella users Puppet DB tool")
@@ -102,9 +108,10 @@ def main():
                         type=str, help='Load users from CSV', dest='usersfromcsv')
     args = parser.parse_args()
 
-    pr2l = dict(id=0, name=1, inst=2, datefrom=9, dateto=10, datecreate=11,
-                status=12)
-    usr2l = dict(idproj=0, name=1, surname=2, email=4, username=7, date_join=8, status=9)
+    pr2l = dict(id=0, name=1, inst=2, respname=3, respemail=5, datefrom=9,
+                dateto=10, datecreate=11, status=12)
+    usr2l = dict(idproj=0, name=1, surname=2, email=4, username=7, date_join=8,
+                 status=9)
 
     if args.sql:
         engine = create_engine('sqlite:///%s' % args.sql, echo=args.verbose)
@@ -134,21 +141,23 @@ def main():
                 u = session.query(User).filter(User.username == u).one()
                 continue
             except NoResultFound:
-                u = User(feedid=0, username=u, name=unicode(per.split(' ')[0], 'utf-8'),
-                        surname=unicode(per.split(' ')[1], 'utf-8'), mail='')
+                u = User(feedid=0, username=u, name=to_unicode(per.split(' ')[0]),
+                        surname=to_unicode(per.split(' ')[1]), mail='')
             try:
                 p = session.query(Projects).filter(Projects.idproj == idproj).one()
             except NoResultFound:
                 p = Projects(feedid=0, idproj=idproj,
+                             respname=to_unicode(proj[pr2l['respname']]),
+                             respemail=to_unicode(proj[pr2l['respemail']]),
                              date_from=datetime.strptime(proj[pr2l['datefrom']],
                                                          '%Y-%m-%d'),
                              date_to=datetime.strptime(proj[pr2l['dateto']],
                                                        '%Y-%m-%d'),
-                             name=unicode(proj[pr2l['name']], 'utf-8'),
+                             name=to_unicode(proj[pr2l['name']]),
                              date_created=datetime.strptime(proj[pr2l['datecreate']],
                                                             '%Y-%m-%d'),
                              status=int(proj[pr2l['status']]),
-                             institution=unicode(proj[pr2l['inst']], 'utf-8'))
+                             institution=to_unicode(proj[pr2l['inst']]))
             u.projects.extend([p])
             session.add(u)
             session.commit()
@@ -165,10 +174,10 @@ def main():
             try:
                 u = session.query(User).filter(User.username == username).one()
             except NoResultFound:
-                u = User(feedid=0, username=unicode(username, 'utf-8'), name=unicode(name, 'utf-8'),
-                         surname=unicode(surname, 'utf-8'), mail=unicode(email, 'utf-8'))
+                u = User(feedid=0, username=to_unicode(username), name=to_unicode(name),
+                         surname=to_unicode(surname), mail=to_unicode(email))
             try:
-                p = session.query(Projects).filter(Projects.idproj == unicode(idproj, 'utf-8')).one()
+                p = session.query(Projects).filter(Projects.idproj == to_unicode(idproj)).one()
             except NoResultFound:
                 try:
                     proj = filter(lambda x: str(x[pr2l['id']]) == idproj, csvprojects)[0]
@@ -178,18 +187,20 @@ def main():
                         status = proj[pr2l['status']]
 
                     p = Projects(feedid=0, idproj=idproj,
-                                date_from=datetime.strptime(proj[pr2l['datefrom']],
-                                                            '%Y-%m-%d'),
-                                date_to=datetime.strptime(proj[pr2l['dateto']],
-                                                        '%Y-%m-%d'),
-                                name=unicode(proj[pr2l['name']], 'utf-8'),
-                                date_created=datetime.strptime(proj[pr2l['datecreate']],
+                                 respname=to_unicode(proj[pr2l['respname']]),
+                                 respemail=to_unicode(proj[pr2l['respemail']]),
+                                 date_from=datetime.strptime(proj[pr2l['datefrom']],
+                                                             '%Y-%m-%d'),
+                                 date_to=datetime.strptime(proj[pr2l['dateto']],
+                                                           '%Y-%m-%d'),
+                                 name=to_unicode(proj[pr2l['name']]),
+                                 date_created=datetime.strptime(proj[pr2l['datecreate']],
                                                                 '%Y-%m-%d'),
-                                status=status,
-                                institution=unicode(proj[pr2l['inst']], 'utf-8'))
+                                 status=status,
+                                 institution=to_unicode(proj[pr2l['inst']]))
 
                 except (IndexError, ValueError) as e:
-                    print "Projects not found: %s, %s" % (u.username, unicode(idproj, 'utf-8'))
+                    print "Projects not found: %s, %s" % (u.username, to_unicode(idproj))
                     continue
 
             u.projects.extend([p])
