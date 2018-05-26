@@ -22,14 +22,16 @@ class User(Base):
     name = Column(Unicode(20))
     surname = Column(Unicode(40))
     mail = Column(Unicode(60))
+    status = Column(Integer)
     projects = relationship("Projects", secondary="assign", backref=backref('users', order_by=id))
 
-    def __init__(self, feedid, username, name, surname, mail):
+    def __init__(self, feedid, username, name, surname, mail, status):
         self.feedid = feedid
         self.username = username
         self.name = name
         self.surname = surname
         self.mail = mail
+        self.status = status
 
 
 class Projects(Base):

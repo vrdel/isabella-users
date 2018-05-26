@@ -85,7 +85,7 @@ def main():
                 continue
             except NoResultFound:
                 u = User(feedid=0, username=u, name=to_unicode(per.split(' ')[0]),
-                        surname=to_unicode(per.split(' ')[1]), mail='')
+                        surname=to_unicode(per.split(' ')[1]), mail='', status=1)
             try:
                 p = session.query(Projects).filter(Projects.idproj == idproj).one()
             except NoResultFound:
@@ -113,12 +113,13 @@ def main():
             idproj = user[usr2l['idproj']]
             surname = user[usr2l['surname']]
             email = user[usr2l['email']]
+            status = 1 if user[usr2l['status']] == 'active' else 0
 
             try:
                 u = session.query(User).filter(User.username == username).one()
             except NoResultFound:
                 u = User(feedid=0, username=to_unicode(username), name=to_unicode(name),
-                         surname=to_unicode(surname), mail=to_unicode(email))
+                         surname=to_unicode(surname), mail=to_unicode(email), status=status)
             try:
                 p = session.query(Projects).filter(Projects.idproj == to_unicode(idproj)).one()
             except NoResultFound:
