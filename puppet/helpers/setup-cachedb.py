@@ -127,7 +127,7 @@ def main():
                     try:
                         status = int(proj[pr2l['status']])
                     except ValueError:
-                        status = proj[pr2l['status']]
+                        status = 1 if proj[pr2l['status']] == 'active' else 0
 
                     p = Projects(feedid=0, idproj=idproj,
                                  respname=to_unicode(proj[pr2l['respname']]),
