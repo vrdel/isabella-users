@@ -14,6 +14,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Date, select
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref
+from sqlalchemy.orm.exc import NoResultFound
 
 from datetime import datetime
 
@@ -47,10 +48,6 @@ class User(Base):
         self.surname = surname
         self.mail = mail
 
-    #def __repr__(self):
-    #    return u"<User('%s','%s', '%s')>" % (self.username, self.name,
-    #                                        self.surname, self.mail)
-
 
 class Projects(Base):
     __tablename__ = 'projects'
@@ -76,14 +73,6 @@ class Projects(Base):
         self.date_from = date_from
         self.date_to = date_to
 
-    #def __repr__(self):
-    #    return u"<Projects('%s','%s','%s','%s','%s','%s')>" % (self.name,
-    #                                                          self.status,
-    #                                                          self.institution,
-    #                                                          self.date_created,
-    #                                                          self.date_from,
-    #                                                          self.date_to)
-
 
 def load_yaml(yamlfile):
     stream = file(yamlfile, 'r')
@@ -103,51 +92,109 @@ def load_csv(csvfile):
 
 def main():
     parser = argparse.ArgumentParser(description="Isabella users Puppet DB tool")
-    parser.add_argument('-c', required=True, help='CSV file', dest='csv')
-    parser.add_argument('-y', required=True, help='YAML file', dest='yaml')
+    parser.add_argument('--projects', required=True, help='Load projects from CSV', dest='projects')
     parser.add_argument('-d', required=True, help='SQLite DB file', dest='sql')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
+    parser.add_argument('--users-from-yaml', required=False, default=False,
+                        type=str, help='Load users from YAML', dest='usersfromyaml')
+    parser.add_argument('--users-from-csv', required=False, default=False,
+                        type=str, help='Load users from CSV', dest='usersfromcsv')
     args = parser.parse_args()
 
-    pr2l = dict(id=0, name=1, inst=2, datefrom=9, dateto=10, datecreate=11, status=12)
+    pr2l = dict(id=0, name=1, inst=2, datefrom=9, dateto=10, datecreate=11,
+                status=12)
+    usr2l = dict(idproj=0, name=1, surname=2, email=4, username=7, date_join=8, status=9)
 
     if args.sql:
         engine = create_engine('sqlite:///%s' % args.sql, echo=args.verbose)
         Base.metadata.create_all(engine)
 
-    if args.csv:
-        csvcontent = load_csv(args.csv)
-
-    if args.yaml:
-        yamlcontent = load_yaml(args.yaml)
+    if args.projects:
+        csvprojects = load_csv(args.projects)
 
     connection = engine.connect()
     Session = sessionmaker()
     Session.configure(bind=engine)
     session = Session()
 
-    for u, d in yamlcontent['isabella_users'].iteritems():
-        try:
-            per, proj = d['comment'].split(',')
-            idproj = proj.strip()
-            proj = filter(lambda x: str(x[pr2l['id']]) == idproj, csvcontent)[0]
+    if args.usersfromyaml:
+        yamlcontent = load_yaml(args.usersfromyaml)
+        for u, d in yamlcontent['isabella_users'].iteritems():
+            try:
+                per, proj = d['comment'].split(',')
+                idproj = proj.strip()
+                proj = filter(lambda x: str(x[pr2l['id']]) == idproj, csvprojects)[0]
 
-        except (IndexError, ValueError):
-            continue
+            except (IndexError, ValueError) as e:
+                print "Projects not found: %s, %s" % (per, idproj)
+                continue
 
-        u = User(feedid=0, username=u, name=unicode(per.split(' ')[0], 'utf-8'),
-                 surname=unicode(per.split(' ')[1], 'utf-8'), mail='')
-        p = Projects(feedid=0, idproj=idproj,
-                     date_from=datetime.strptime(proj[pr2l['datefrom']], '%Y-%m-%d'),
-                     date_to=datetime.strptime(proj[pr2l['dateto']], '%Y-%m-%d'),
-                     name=unicode(proj[pr2l['name']], 'utf-8'),
-                     date_created=datetime.strptime(proj[pr2l['datecreate']], '%Y-%m-%d'),
-                     status=int(proj[pr2l['status']]),
-                     institution=unicode(proj[pr2l['inst']], 'utf-8'))
-        u.projects.extend([p])
-        session.add(u)
-        session.commit()
+            try:
+                u = session.query(User).filter(User.username == u).one()
+                continue
+            except NoResultFound:
+                u = User(feedid=0, username=u, name=unicode(per.split(' ')[0], 'utf-8'),
+                        surname=unicode(per.split(' ')[1], 'utf-8'), mail='')
+            try:
+                p = session.query(Projects).filter(Projects.idproj == idproj).one()
+            except NoResultFound:
+                p = Projects(feedid=0, idproj=idproj,
+                             date_from=datetime.strptime(proj[pr2l['datefrom']],
+                                                         '%Y-%m-%d'),
+                             date_to=datetime.strptime(proj[pr2l['dateto']],
+                                                       '%Y-%m-%d'),
+                             name=unicode(proj[pr2l['name']], 'utf-8'),
+                             date_created=datetime.strptime(proj[pr2l['datecreate']],
+                                                            '%Y-%m-%d'),
+                             status=int(proj[pr2l['status']]),
+                             institution=unicode(proj[pr2l['inst']], 'utf-8'))
+            u.projects.extend([p])
+            session.add(u)
+            session.commit()
+
+    elif args.usersfromcsv:
+        csvusers = load_csv(args.usersfromcsv)
+        for user in csvusers:
+            username = user[usr2l['username']]
+            name = user[usr2l['name']]
+            idproj = user[usr2l['idproj']]
+            surname = user[usr2l['surname']]
+            email = user[usr2l['email']]
+
+            try:
+                u = session.query(User).filter(User.username == username).one()
+            except NoResultFound:
+                u = User(feedid=0, username=unicode(username, 'utf-8'), name=unicode(name, 'utf-8'),
+                         surname=unicode(surname, 'utf-8'), mail=unicode(email, 'utf-8'))
+            try:
+                p = session.query(Projects).filter(Projects.idproj == unicode(idproj, 'utf-8')).one()
+            except NoResultFound:
+                try:
+                    proj = filter(lambda x: str(x[pr2l['id']]) == idproj, csvprojects)[0]
+                    try:
+                        status = int(proj[pr2l['status']])
+                    except ValueError:
+                        status = proj[pr2l['status']]
+
+                    p = Projects(feedid=0, idproj=idproj,
+                                date_from=datetime.strptime(proj[pr2l['datefrom']],
+                                                            '%Y-%m-%d'),
+                                date_to=datetime.strptime(proj[pr2l['dateto']],
+                                                        '%Y-%m-%d'),
+                                name=unicode(proj[pr2l['name']], 'utf-8'),
+                                date_created=datetime.strptime(proj[pr2l['datecreate']],
+                                                                '%Y-%m-%d'),
+                                status=status,
+                                institution=unicode(proj[pr2l['inst']], 'utf-8'))
+
+                except (IndexError, ValueError) as e:
+                    print "Projects not found: %s, %s" % (u.username, unicode(idproj, 'utf-8'))
+                    continue
+
+            u.projects.extend([p])
+            session.add(u)
+            session.commit()
 
 
 if __name__ == '__main__':
