@@ -9,6 +9,7 @@ pkg_resources.require(__requires__)
 import argparse
 import csv
 import yaml
+from unidecode import unidecode
 
 from isabella_users_puppet.cachedb import Base, User, Projects
 
@@ -33,6 +34,17 @@ def load_csv(csvfile):
             lines.append(l)
 
         return lines
+
+
+def concat(s):
+    if '-' in s:
+        s = s.split('-')
+        s = ''.join(s)
+    if ' ' in s:
+        s = s.split(' ')
+        s = ''.join(s)
+
+    return s
 
 
 def to_unicode(s):
@@ -109,17 +121,19 @@ def main():
         csvusers = load_csv(args.usersfromcsv)
         for user in csvusers:
             username = user[usr2l['username']]
-            name = user[usr2l['name']]
+            name = unidecode(to_unicode(user[usr2l['name']])).strip()
             idproj = user[usr2l['idproj']]
-            surname = user[usr2l['surname']]
+            surname = unidecode(to_unicode(user[usr2l['surname']])).strip()
+            surname = concat(surname)
+            name = concat(name)
             email = user[usr2l['email']]
             status = 1 if user[usr2l['status']] == 'active' else 0
 
             try:
                 u = session.query(User).filter(User.username == username).one()
             except NoResultFound:
-                u = User(feedid=0, username=to_unicode(username), name=to_unicode(name),
-                         surname=to_unicode(surname), mail=to_unicode(email), status=status)
+                u = User(feedid=0, username=username, name=name,
+                         surname=surname, mail=email, status=status)
             try:
                 p = session.query(Projects).filter(Projects.idproj == to_unicode(idproj)).one()
             except NoResultFound:

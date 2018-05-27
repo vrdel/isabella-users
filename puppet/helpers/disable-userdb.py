@@ -39,7 +39,7 @@ def all_false(cont):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Isabella users Puppet DB tool")
+    parser = argparse.ArgumentParser(description="isabella-users-puppet disable user DB")
     parser.add_argument('-d', required=True, help='SQLite DB file', dest='sql')
     parser.add_argument('-t', required=True, help='YYY-MM-DD', type=is_date, dest='date')
     parser.add_argument('-v', required=False, default=False,
@@ -56,11 +56,15 @@ def main():
     for p in session.query(Projects):
         if p.date_to < args.date:
             p.status = 0
+        else:
+            p.status = 1
 
     for u in session.query(User):
         proj_statuses = [p.status for p in u.projects]
         if all_false(proj_statuses):
             u.status = 0
+        else:
+            u.status = 1
 
     session.commit()
 
