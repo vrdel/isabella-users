@@ -95,6 +95,9 @@ def main():
     session = Session()
 
     for project in data:
+        # skip projects that have not been accepted yet
+        if int(project['status_id']) > 1:
+            continue
         idproj = project['sifra']
         try:
             p = session.query(Projects).filter(Projects.idproj == idproj).one()
@@ -117,7 +120,7 @@ def main():
                     and_(User.name == feedname,
                          User.surname == feedsurname)).one()
             except NoResultFound:
-                u = User(feedid=0, username=gen_username(feedname, feedsurname), name=feedname,
+                u = User(feedid=user['id'], username=gen_username(feedname, feedsurname), name=feedname,
                          surname=feedsurname, mail=user['mail'], status=int(user['status_id']))
             p.users.extend([u])
         session.add(p)
