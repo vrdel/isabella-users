@@ -121,7 +121,9 @@ def main():
                          User.surname == feedsurname)).one()
             except NoResultFound:
                 u = User(feedid=user['id'], username=gen_username(feedname, feedsurname), name=feedname,
-                         surname=feedsurname, mail=user['mail'], status=int(user['status_id']))
+                         surname=feedsurname, mail=user['mail'],
+                         date_join=datetime.now(),
+                         status=int(user['status_id']))
             p.users.extend([u])
         session.add(p)
 
