@@ -109,7 +109,14 @@ def main():
                          date_created=datetime.now(),
                          status=int(project['status_id']))
 
-        users = project.get('users')
+        usersdb = set([(concat(ue.name), concat(ue.surname)) for ue in p.users])
+        usersfeed = list()
+        diff = set()
+        users = project.get('users', None)
+        if users:
+            usersfeed = set([(concat(unidecode(uf['ime'])), concat(unidecode(uf['prezime']))) for uf in users])
+            diff = usersdb.difference(usersfeed)
+
         for user in users:
             feedname = unidecode(user['ime'])
             feedname = concat(feedname)
@@ -120,11 +127,15 @@ def main():
                     and_(User.name == feedname,
                          User.surname == feedsurname)).one()
             except NoResultFound:
-                u = User(feedid=user['id'], username=gen_username(feedname, feedsurname), name=feedname,
-                         surname=feedsurname, mail=user['mail'],
+                u = User(feedid=user['id'], username=gen_username(feedname, feedsurname),
+                         name=feedname, surname=feedsurname, mail=user['mail'],
                          date_join=datetime.now(),
                          status=int(user['status_id']))
             p.users.extend([u])
+        if diff:
+            for ud in diff:
+                u = session.query(User).filter(and_(User.name == ud[0], User.surname == ud[1])).one()
+                p.users.remove(u)
         session.add(p)
 
     session.commit()
