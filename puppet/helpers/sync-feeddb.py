@@ -118,10 +118,8 @@ def main():
             diff = usersdb.difference(usersfeed)
 
         for user in users:
-            feedname = unidecode(user['ime'])
-            feedname = concat(feedname)
-            feedsurname = unidecode(user['prezime'])
-            feedsurname = concat(feedsurname)
+            feedname = concat(unidecode(user['ime']))
+            feedsurname = concat(unidecode(user['prezime']))
             try:
                 u = session.query(User).filter(
                     and_(User.name == feedname,

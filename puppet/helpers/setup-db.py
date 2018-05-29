@@ -11,10 +11,10 @@ import csv
 import yaml
 from unidecode import unidecode
 
-from isabella_users_puppet.cachedb import Base, User, Projects
+from isabella_users_puppet.cachedb import Base, User, Projects, MaxUID
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.orm import sessionmaker
 
 from datetime import datetime
@@ -59,6 +59,8 @@ def main():
                         action='store_true', help='Verbose', dest='verbose')
     parser.add_argument('--users-from-yaml', required=False, default=False,
                         type=str, help='Load users from YAML', dest='usersfromyaml')
+    parser.add_argument('--maxuid', required=False, default=False,
+                        type=str, help='UID to start from', dest='maxuid')
     parser.add_argument('--users-from-csv', required=False, default=False,
                         type=str, help='Load users from CSV', dest='usersfromcsv')
     args = parser.parse_args()
@@ -100,6 +102,10 @@ def main():
                          surname=to_unicode(per.split(' ')[1]), mail='',
                          date_join=datetime.strptime('1970-01-01', '%Y-%m-%d'),
                          status=1, last_project='')
+            except MultipleResultsFound as e:
+                print str(e) + ' for user' + u
+                continue
+
             try:
                 p = session.query(Projects).filter(Projects.idproj == idproj).one()
             except NoResultFound:
@@ -170,6 +176,14 @@ def main():
             session.add(u)
             session.commit()
 
+    if args.maxuid:
+        mu = MaxUID(args.maxuid)
+        f = session.query(MaxUID).first()
+        if not f:
+            session.add(mu)
+        else:
+            f.uid = args.maxuid
+        session.commit()
 
 if __name__ == '__main__':
     main()

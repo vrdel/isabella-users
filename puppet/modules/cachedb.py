@@ -66,3 +66,13 @@ class Projects(Base):
         self.date_created = date_created
         self.date_from = date_from
         self.date_to = date_to
+
+
+class MaxUID(Base):
+    __tablename__ = 'maxuid'
+
+    id = Column(Integer, primary_key=True)
+    uid = Column(Integer)
+
+    def __init__(self, uid):
+        self.uid = uid
