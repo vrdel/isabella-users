@@ -98,7 +98,8 @@ def main():
             except NoResultFound:
                 u = User(feedid=0, username=u, name=to_unicode(per.split(' ')[0]),
                          surname=to_unicode(per.split(' ')[1]), mail='',
-                         date_join=datetime.strptime('1970-01-01', '%Y-%m-%d'), status=1)
+                         date_join=datetime.strptime('1970-01-01', '%Y-%m-%d'),
+                         status=1, last_project='')
             try:
                 p = session.query(Projects).filter(Projects.idproj == idproj).one()
             except NoResultFound:
@@ -136,7 +137,7 @@ def main():
             except NoResultFound:
                 u = User(feedid=0, username=username, name=name,
                          surname=surname, mail=email, date_join=date_join,
-                         status=status)
+                         status=status, last_project='')
             try:
                 p = session.query(Projects).filter(Projects.idproj == to_unicode(idproj)).one()
             except NoResultFound:

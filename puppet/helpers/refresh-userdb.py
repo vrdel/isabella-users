@@ -65,6 +65,11 @@ def main():
             u.status = 0
         else:
             u.status = 1
+        proj_datecreate = [(p.id, p.date_created) for p in u.projects if p.status == 1]
+        if proj_datecreate:
+            last = max(proj_datecreate)
+            plast = session.query(Projects).filter(Projects.id == last[0]).one()
+            u.last_project = plast.idproj
 
     session.commit()
 

@@ -130,7 +130,7 @@ def main():
                 u = User(feedid=user['id'], username=gen_username(feedname, feedsurname),
                          name=feedname, surname=feedsurname, mail=user['mail'],
                          date_join=datetime.now(),
-                         status=int(user['status_id']))
+                         status=int(user['status_id']), last_project='')
             p.users.extend([u])
         if diff:
             for ud in diff:
