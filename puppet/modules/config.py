@@ -17,6 +17,7 @@ def parse_config(logger=None):
                     confopts['external'].update({'crongiusersyaml': config.get(section, 'crongiusersyaml')})
                     confopts['external'].update({'maxuidyaml': config.get(section, 'maxuidyaml')})
                     confopts['external'].update({'backupdir': config.get(section, 'backupdir')})
+                    confopts['external'].update({'mapuser': config.get(section, 'mapuser')})
 
                 if section.startswith('settings'):
                     confopts['settings'] = {'gid': long(config.get(section, 'gid'))}

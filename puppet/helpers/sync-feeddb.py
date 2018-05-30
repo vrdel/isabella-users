@@ -21,6 +21,7 @@ import argparse
 import requests
 import sys
 import re
+import json
 
 connection_timeout = 120
 conf_opts = parse_config()
@@ -87,6 +88,10 @@ def main():
 
     data = fetch_feeddata(conf_opts['external']['subscription'], logger)
 
+    data = fetch_feeddata(conf_opts['external']['subscription'], logger)
+    with open(conf_opts['external']['mapuser'], mode='r') as fp:
+        mapuser = json.loads(fp.read())
+
     if args.sql:
         engine = create_engine('sqlite:///%s' % args.sql, echo=args.verbose)
 
@@ -120,6 +125,12 @@ def main():
         for user in users:
             feedname = concat(unidecode(user['ime']))
             feedsurname = concat(unidecode(user['prezime']))
+            for mu in mapuser:
+                munc = concat(mu['from']['name'])
+                musc = concat(mu['from']['surname'])
+                if feedname == munc and feedsurname == musc:
+                    feedname = concat(mu['to']['name'])
+                    feedsurname = concat(mu['to']['surname'])
             try:
                 u = session.query(User).filter(
                     and_(User.name == feedname,
