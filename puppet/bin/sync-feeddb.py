@@ -47,17 +47,24 @@ def fetch_feeddata(subscription, logger):
     return users.values()
 
 
-def gen_username(name, surname):
+def gen_username(name, surname, existusers):
     # ASCII convert
     name = name.lower()
     surname = surname.lower()
-    # remove " ", "|" and "/"
-    name = re.sub('[ \-|]', '', name)
-    surname = re.sub('[ \-|]', '', surname)
     # take first char of name and first seven from surname
     username = name[0] + surname[:7]
 
-    return username
+    if username not in existusers:
+        return username
+
+    elif username in existusers:
+        match = list()
+        if len(username) < 8:
+            match = filter(lambda u: u.startswith(username), existusers)
+        else:
+            match = filter(lambda u: u.startswith(username[:-1]), existusers)
+
+        return username + str(len(match))
 
 
 def to_unicode(s):
@@ -136,7 +143,8 @@ def main():
                     and_(User.name == feedname,
                          User.surname == feedsurname)).one()
             except NoResultFound:
-                u = User(feedid=user['id'], username=gen_username(feedname, feedsurname),
+                allusernames = set([username[0] for username in session.query(User.username).all()])
+                u = User(feedid=user['id'], username=gen_username(feedname, feedsurname, allusernames),
                          name=feedname, surname=feedsurname, mail=user['mail'],
                          date_join=datetime.now(),
                          status=int(user['status_id']), last_project='')
@@ -148,6 +156,7 @@ def main():
         session.add(p)
 
     session.commit()
+
 
 if __name__ == '__main__':
     main()

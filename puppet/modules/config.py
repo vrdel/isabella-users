@@ -19,7 +19,7 @@ def parse_config(logger=None):
                     confopts['external'].update({'mapuser': config.get(section, 'mapuser')})
 
                 if section.startswith('settings'):
-                    confopts['settings'] = {'gid': int(config.getint(section, 'gid'))}
+                    confopts['settings'] = {'gid': config.getint(section, 'gid')}
                     confopts['settings'].update({'shell': config.get(section, 'shell')})
                     confopts['settings'].update({'disableuser': config.getboolean(section, 'disableuser')})
                     confopts['settings'].update({'excludeuser': config.get(section, 'excludeuser')})
