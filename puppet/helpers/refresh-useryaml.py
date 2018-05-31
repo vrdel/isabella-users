@@ -124,7 +124,7 @@ def main():
     newincrongi = newusers.intersection(yamlcrongiusers)
 
     if args.nop:
-        print "Account to be opened:"
+        print "Accounts to be opened:"
         print
         print "Diff DB - YAML"
         print newusers
@@ -164,8 +164,12 @@ def main():
             newusersd.update({unidecode(udb.username): newuser})
 
         allusers = merge_users(yusers['isabella_users'], newusersd)
+        skipusers = conf_opts['settings']['excludeuser']
+        skipusers = set([u.strip() for u in skipusers.split(',')])
         if conf_opts['settings']['disableuser']:
             for u, d in allusers.iteritems():
+                if u in skipusers:
+                    continue
                 try:
                     udb = session.query(User).filter(User.username == u).one()
                     if udb.status == 0:
