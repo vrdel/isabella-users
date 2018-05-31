@@ -166,19 +166,23 @@ def main():
         allusers = merge_users(yusers['isabella_users'], newusersd)
         skipusers = conf_opts['settings']['excludeuser']
         skipusers = set([u.strip() for u in skipusers.split(',')])
-        if conf_opts['settings']['disableuser']:
-            for u, d in allusers.iteritems():
-                if u in skipusers:
-                    continue
-                try:
-                    udb = session.query(User).filter(User.username == u).one()
+        for u, d in allusers.iteritems():
+            if u in skipusers:
+                continue
+            try:
+                udb = session.query(User).filter(User.username == u).one()
+                if conf_opts['settings']['disableuser']:
                     if udb.status == 0:
                         d['shell'] = '/sbin/nologin'
                     elif udb.status == 1:
                         d['shell'] = conf_opts['settings']['shell']
-                except NoResultFound as e:
-                    logger.error('{1} {0}'.format(u, str(e)))
-                    continue
+                if udb.last_project:
+                    d['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname, udb.last_project)
+                else:
+                    d['comment'] = '{0} {1}'.format(udb.name, udb.surname)
+            except NoResultFound as e:
+                logger.error('{1} {0}'.format(u, str(e)))
+                continue
         backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
         r = write_yaml(conf_opts['external']['isabellausersyaml'], {'isabella_users': allusers}, logger)
         if r:
