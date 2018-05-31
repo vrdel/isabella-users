@@ -142,9 +142,9 @@ def main():
                 comment = '{0} {1}, {2}'.format(udb.name, udb.surname, udb.last_project)
             else:
                 comment = '{0} {1}'.format(udb.name, udb.surname)
-            newuser = dict(comment='%s' % comment,
-                           gid=int(conf_opts['settings']['gid']),
-                           shell='%s' % conf_opts['settings']['shell'],
+            newuser = dict(comment=comment,
+                           gid=conf_opts['settings']['gid'],
+                           shell=conf_opts['settings']['shell'],
                            home='/home/{0}'.format(udb.username),
                            uid=ycrongiusers['crongi_users'][u]['uid'])
             newusersd.update({unidecode(udb.username): newuser})
@@ -157,15 +157,26 @@ def main():
             else:
                 comment = '{0} {1}'.format(udb.name, udb.surname)
             newuser = dict(comment='%s' % comment,
-                           gid=int(conf_opts['settings']['gid']),
-                           shell='%s' % conf_opts['settings']['shell'],
+                           gid=conf_opts['settings']['gid'],
+                           shell=conf_opts['settings']['shell'],
                            home='/home/{0}'.format(udb.username),
                            uid=uid)
             newusersd.update({unidecode(udb.username): newuser})
 
-        fullusers = merge_users(yusers['isabella_users'], newusersd)
+        allusers = merge_users(yusers['isabella_users'], newusersd)
+        if conf_opts['settings']['disableuser']:
+            for u, d in allusers.iteritems():
+                try:
+                    udb = session.query(User).filter(User.username == u).one()
+                    if udb.status == 0:
+                        d['shell'] = '/sbin/nologin'
+                    elif udb.status == 1:
+                        d['shell'] = conf_opts['settings']['shell']
+                except NoResultFound as e:
+                    logger.error('{1} {0}'.format(u, str(e)))
+                    continue
         backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
-        r = write_yaml(conf_opts['external']['isabellausersyaml'], {'isabella_users': fullusers}, logger)
+        r = write_yaml(conf_opts['external']['isabellausersyaml'], {'isabella_users': allusers}, logger)
         if r:
             logger.info("Added %d users: %s" % (len(newusersd), ', '.join(newusersd.keys())))
             f = session.query(MaxUID).first()
