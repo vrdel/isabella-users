@@ -137,6 +137,7 @@ def main():
         newusersd = dict()
 
         for u in newincrongi:
+            newusers.remove(u)
             udb = session.query(User).filter(User.username == u).one()
             if udb.last_project:
                 comment = '{0} {1}, {2}'.format(udb.name, udb.surname, udb.last_project)
@@ -169,6 +170,7 @@ def main():
         for u, d in allusers.iteritems():
             if u in skipusers:
                 continue
+
             try:
                 udb = session.query(User).filter(User.username == u).one()
                 if conf_opts['settings']['disableuser']:
@@ -180,9 +182,11 @@ def main():
                     d['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname, udb.last_project)
                 else:
                     d['comment'] = '{0} {1}'.format(udb.name, udb.surname)
+
             except NoResultFound as e:
                 logger.error('{1} {0}'.format(u, str(e)))
                 continue
+
         backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
         r = write_yaml(conf_opts['external']['isabellausersyaml'], {'isabella_users': allusers}, logger)
         if r:

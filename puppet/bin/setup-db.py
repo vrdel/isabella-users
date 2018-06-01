@@ -109,6 +109,10 @@ def main():
             try:
                 p = session.query(Projects).filter(Projects.idproj == idproj).one()
             except NoResultFound:
+                try:
+                    status = int(proj[pr2l['status']])
+                except ValueError:
+                    status = 1 if proj[pr2l['status']] == 'active' else 0
                 p = Projects(feedid=0, idproj=idproj,
                              respname=to_unicode(proj[pr2l['respname']]),
                              respemail=to_unicode(proj[pr2l['respemail']]),
@@ -119,7 +123,7 @@ def main():
                              name=to_unicode(proj[pr2l['name']]),
                              date_created=datetime.strptime(proj[pr2l['datecreate']],
                                                             '%Y-%m-%d'),
-                             status=int(proj[pr2l['status']]),
+                             status=status,
                              institution=to_unicode(proj[pr2l['inst']]))
             u.projects.extend([p])
             session.add(u)
