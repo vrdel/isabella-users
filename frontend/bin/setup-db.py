@@ -59,6 +59,7 @@ def fetch_users(subscription, logger):
 def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
+    lusers = list()
 
     parser = argparse.ArgumentParser(description="Isabella users frontend DB tool")
     parser.add_argument('-d', required=True, help='SQLite DB file', dest='sql')
@@ -78,30 +79,36 @@ def main():
     usertool = UserUtils(logger)
 
     for userobj in usertool.all_users():
-        homedir = usertool.get_user_home(userobj)
-        if homedir.startswith('/home'):
-            comment = usertool.get_user_comment(userobj)
-            name, surname, project = '', '', ''
-            if comment:
-                if ',' in comment:
-                    fullname, project = map(lambda x: x.strip(), comment.split(','))
-                    name, surname = fullname.split(' ')
-                else:
-                    name, surname = comment.split(' ')
+        comment = usertool.get_user_comment(userobj)
+        name, surname, project = '', '', ''
+        if comment:
+            if ',' in comment:
+                fullname, project = map(lambda x: x.strip(), comment.split(','))
+                name, surname = fullname.split(' ')
+            else:
+                name, surname = comment.split(' ')
 
-            username = usertool.get_user_name(userobj)
-            shell = usertool.get_user_shell(userobj)
-            passw = usertool.get_user_pass(userobj)
-            userid = int(usertool.get_user_id(userobj))
+        username = usertool.get_user_name(userobj)
+        shell = usertool.get_user_shell(userobj)
+        passw = usertool.get_user_pass(userobj)
+        userid = int(usertool.get_user_id(userobj))
+        home = usertool.get_user_home(userobj)
 
-            u = User(username, name, surname,
-                     'set', shell, homedir, 'set',
-                     1, 1, 1,
-                     datetime.strptime('1970-01-01', '%Y-%m-%d'),
-                     1, project)
-            session.add(u)
+        lusers.append(username)
+
+        u = User(username, name, surname,
+                    'set', shell, home, 'set',
+                    True, True, True, True,
+                    datetime.strptime('1970-01-01', '%Y-%m-%d'),
+                    True, project)
+        session.add(u)
 
     session.commit()
+
+    if lusers:
+        logger.info("Users added into DB: %s" % lusers)
+    else:
+        logger.info("DB and /etc/passwd synced")
 
 
 if __name__ == '__main__':
