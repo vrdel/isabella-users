@@ -55,7 +55,7 @@ def main():
             home = usertool.get_user_home(userobj)
 
             u = User(username, name, surname,
-                     'set', shell, home, 'set',
+                     '', shell, home, '',
                      False, False, False, False,
                      datetime.datetime.now(),
                      True, project)
