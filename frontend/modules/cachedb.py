@@ -19,18 +19,18 @@ class User(Base):
     uid = Column(Integer)
     gid = Column(Integer)
     issubscribe = Column(Boolean)
-    issentmail = Column(Boolean)
     ispasswordset = Column(Boolean)
     ishomecreated = Column(Boolean)
     issgeadded = Column(Boolean)
+    issentemail = Column(Boolean)
     date_created = Column(Date)
     status = Column(Integer)
     project = Column(Unicode(40))
     last_project = Column(Unicode(40))
 
     def __init__(self, username, name, surname, email, shell, homedir, password,
-                 uid, gid, issubscribe, issentemail, ispasswordset,
-                 ishomecreated, issgeadded, date_created, status, project,
+                 uid, gid, issubscribe, ispasswordset, ishomecreated,
+                 issgeadded,  issentemail, date_created, status, project,
                  last_project):
         self.username = username
         self.name = name

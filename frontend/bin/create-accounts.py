@@ -12,6 +12,7 @@ from isabella_users_frontend.cachedb import User
 from isabella_users_frontend.userutils import UserUtils
 from isabella_users_frontend.log import Logger
 from isabella_users_frontend.config import parse_config
+from isabella_users_frontend.msg import InfoAccOpen
 
 from unidecode import unidecode
 
@@ -32,6 +33,27 @@ connection_timeout = 120
 conf_opts = parse_config()
 
 
+def subscribe_maillist(token, name, email, username, logger):
+    try:
+        headers, payload = dict(), dict()
+
+        headers = requests.utils.default_headers()
+        headers.update({'content-type': 'application/x-www-form-urlencoded'})
+        headers.update({'x-auth-token': token})
+        payload = "list={0}&email={1}".format(name, email)
+
+        response = requests.post(conf_opts['external']['mailinglist'],
+                                 headers=headers, data=payload, timeout=connection_timeout)
+        response.raise_for_status()
+
+        return True
+
+    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
+        logger.error('Failed subscribing user %s on %s: %s' % (username, name,
+                                                               str(e)))
+        return False
+
+
 def fetch_projects(subscription, logger):
     try:
         response = requests.get(subscription, timeout=connection_timeout, verify=False)
@@ -44,10 +66,7 @@ def fetch_projects(subscription, logger):
     except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
         logger.error('requests error: %s' % e)
 
-    except Exception as e:
-        logger.error(e)
-
-    return None
+        return False
 
 
 def concat(s):
@@ -98,27 +117,6 @@ def create_homedir(dir, uid, gid, logger):
         return False
 
 
-def subscribe_maillist(token, name, email, username, logger):
-    try:
-        headers, payload = dict(), dict()
-
-        headers = requests.utils.default_headers()
-        headers.update({'content-type': 'application/x-www-form-urlencoded'})
-        headers.update({'x-auth-token': token})
-        payload = "list={0}&email={1}".format(name, email)
-
-        response = requests.post(conf_opts['external']['mailinglist'],
-                                 headers=headers, data=payload, timeout=180)
-        response.raise_for_status()
-
-        return True
-
-    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
-        logger.error('Failed subscribing user %s on %s: %s' % (username, name,
-                                                               str(e)))
-        return False
-
-
 def extract_email(projects, name, surname, last_project):
     for p in projects:
         if last_project == p['sifra']:
@@ -161,6 +159,7 @@ def main():
         rs = create_shareddir(sharedpath + u.username, u.uid, u.gid, logger)
         if all([rh, rs]):
             u.ishomecreated = True
+    session.commit()
 
     not_sge = session.query(User).filter(User.issgeadded == False).all()
     for u in not_sge:
@@ -173,6 +172,7 @@ def main():
 
         except Exception as e:
             logger.error('Failed adding user %s to SGE: %s ' % (u.username, str(e)))
+    session.commit()
 
     not_password = session.query(User).filter(User.ispasswordset == False).all()
     for u in not_password:
@@ -180,13 +180,31 @@ def main():
         u.password = password
         usertool.set_user_pass(usertool.get_user(u.username), password)
         u.ispasswordset = True
+    session.commit()
 
-    not_email = session.query(User).filter(User.issentmail == False).all()
+    not_email = session.query(User).filter(User.issentemail == False).all()
     for u in not_email:
+        templatepath = conf_opts['external']['emailtemplate']
+        smtpserver = conf_opts['external']['emailsmtp']
+        emailfrom = conf_opts['external']['emailfrom']
         email = extract_email(projects, u.name, u.surname, u.last_project)
         u.email = email
-        u.issentmail = True
 
+        # TODO: replace with real email
+        e = InfoAccOpen(u.username, u.password, templatepath, smtpserver,
+                        emailfrom, email, logger)
+        r = e.send()
+        if r:
+            u.issentemail = True
+    session.commit()
+
+    not_subscribed = session.query(User).filter(User.issubscribe == False).all()
+    for u in not_subscribed:
+        token = conf_opts['external']['mailinglisttoken']
+        listname = conf_opts['external']['mailinglistname']
+        r = subscribe_maillist(token, listname, u.email, u.username, logger)
+        if r:
+            u.issubscribe = True
     session.commit()
 
 

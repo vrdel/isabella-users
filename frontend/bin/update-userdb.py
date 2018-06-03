@@ -51,7 +51,7 @@ def main():
             username = usertool.get_user_name(userobj)
             shell = usertool.get_user_shell(userobj)
             passw = usertool.get_user_pass(userobj)
-            userid = int(usertool.get_user_id(userobj))
+            userid = usertool.get_user_id(userobj)
             groupid = usertool.get_group_id(userobj)
             home = usertool.get_user_home(userobj)
 
@@ -60,8 +60,8 @@ def main():
                      datetime.datetime.now(), True, project, project)
 
             session.add(u)
-            session.commit()
 
+        session.commit()
         logger.info("New users added into DB: %s" % diff)
 
     else:
