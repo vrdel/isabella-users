@@ -1,0 +1,7 @@
+include config/*
+include modules/*
+include helpers/sgetools/*
+include bin/*
+include isabella-users-frontend.spec
+
+recursive-exclude pymodule *.pyc *.pyo
