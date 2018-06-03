@@ -23,7 +23,6 @@ from datetime import datetime
 import argparse
 import csv
 import sys
-import yaml
 
 
 def gen_password():

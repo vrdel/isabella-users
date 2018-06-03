@@ -190,7 +190,6 @@ def main():
         email = extract_email(projects, u.name, u.surname, u.last_project)
         u.email = email
 
-        # TODO: replace with real email
         e = InfoAccOpen(u.username, u.password, templatepath, smtpserver,
                         emailfrom, email, logger)
         r = e.send()
