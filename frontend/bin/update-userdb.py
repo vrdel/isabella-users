@@ -52,18 +52,17 @@ def main():
             shell = usertool.get_user_shell(userobj)
             passw = usertool.get_user_pass(userobj)
             userid = int(usertool.get_user_id(userobj))
+            groupid = usertool.get_group_id(userobj)
             home = usertool.get_user_home(userobj)
 
-            u = User(username, name, surname,
-                     '', shell, home, '',
-                     False, False, False, False,
-                     datetime.datetime.now(),
-                     True, project)
+            u = User(username, name, surname, '', shell, home, '', userid,
+                     groupid, False, False, False, False, False,
+                     datetime.datetime.now(), True, project, project)
 
             session.add(u)
             session.commit()
 
-            logger.info("New users added into DB: %s" % diff)
+        logger.info("New users added into DB: %s" % diff)
 
     else:
         logger.info("No new users added in /etc/passwd")

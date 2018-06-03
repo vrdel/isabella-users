@@ -79,28 +79,21 @@ def main():
     usertool = UserUtils(logger)
 
     for userobj in usertool.all_users():
-        comment = usertool.get_user_comment(userobj)
-        name, surname, project = '', '', ''
-        if comment:
-            if ',' in comment:
-                fullname, project = map(lambda x: x.strip(), comment.split(','))
-                name, surname = fullname.split(' ')
-            else:
-                name, surname = comment.split(' ')
-
+        name, surname, project = usertool.info_comment(userobj)
         username = usertool.get_user_name(userobj)
         shell = usertool.get_user_shell(userobj)
         passw = usertool.get_user_pass(userobj)
-        userid = int(usertool.get_user_id(userobj))
+        userid = usertool.get_user_id(userobj)
+        groupid = usertool.get_group_id(userobj)
         home = usertool.get_user_home(userobj)
 
         lusers.append(username)
 
-        u = User(username, name, surname,
-                    'set', shell, home, 'set',
-                    True, True, True, True,
-                    datetime.strptime('1970-01-01', '%Y-%m-%d'),
-                    True, project)
+        u = User(username, name, surname, 'set', shell,
+                 home, 'set', userid, groupid,
+                 True, True, True, True, True,
+                 datetime.strptime('1970-01-01', '%Y-%m-%d'),
+                 True, project, project)
         session.add(u)
 
     session.commit()

@@ -26,14 +26,13 @@ import sys
 import requests
 import os
 import shutil
+import subprocess
 
 connection_timeout = 120
 conf_opts = parse_config()
 
 
 def fetch_projects(subscription, logger):
-    users = None
-
     try:
         response = requests.get(subscription, timeout=connection_timeout, verify=False)
         response.raise_for_status()
@@ -48,7 +47,7 @@ def fetch_projects(subscription, logger):
     except Exception as e:
         logger.error(e)
 
-    return users.values()
+    return None
 
 
 def concat(s):
@@ -147,12 +146,46 @@ def main():
     Session.configure(bind=engine)
     session = Session()
 
+    usertool = UserUtils(logger)
+
     projects = fetch_projects(conf_opts['external']['subscription'], logger)
 
-    not_created = session.query(User).filter(User.ishomecreated == False).all()
-    for u in not_created:
-        u.mail = extract_email(projects, u.name, u.surname, u.last_project)
-        u.password = gen_password()
+    if not projects:
+        logger.error('Could not fetch projects and users')
+        raise SystemExit(1)
+
+    not_home = session.query(User).filter(User.ishomecreated == False).all()
+    for u in not_home:
+        rh = create_homedir(u.homedir, u.uid, u.gid, logger)
+        sharedpath = conf_opts['settings']['sharedpath']
+        rs = create_shareddir(sharedpath + u.username, u.uid, u.gid, logger)
+        if all([rh, rs]):
+            u.ishomecreated = True
+
+    not_sge = session.query(User).filter(User.issgeadded == False).all()
+    for u in not_sge:
+        sgecreateuser_cmd = conf_opts['settings']['sgecreateuser']
+        try:
+            os.chdir(os.path.dirname(sgecreateuser_cmd))
+            subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, u.username, u.last_project),
+                                  shell=True, bufsize=512)
+            u.issgeadded = True
+
+        except Exception as e:
+            logger.error('Failed adding user %s to SGE: %s ' % (u.username, str(e)))
+
+    not_password = session.query(User).filter(User.ispasswordset == False).all()
+    for u in not_password:
+        password = gen_password()
+        u.password = password
+        usertool.set_user_pass(usertool.get_user(u.username), password)
+        u.ispasswordset = True
+
+    not_email = session.query(User).filter(User.issentmail == False).all()
+    for u in not_email:
+        email = extract_email(projects, u.name, u.surname, u.last_project)
+        u.email = email
+        u.issentmail = True
 
     session.commit()
 
