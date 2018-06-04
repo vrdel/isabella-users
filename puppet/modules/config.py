@@ -15,14 +15,15 @@ def parse_config(logger=None):
                     confopts['external'] = ({'subscription': config.get(section, 'subscription')})
                     confopts['external'].update({'isabellausersyaml': config.get(section, 'isabellausersyaml')})
                     confopts['external'].update({'crongiusersyaml': config.get(section, 'crongiusersyaml')})
-                    confopts['external'].update({'backupdir': config.get(section, 'backupdir')})
-                    confopts['external'].update({'mapuser': config.get(section, 'mapuser')})
 
                 if section.startswith('settings'):
                     confopts['settings'] = {'gid': config.getint(section, 'gid')}
                     confopts['settings'].update({'shell': config.get(section, 'shell')})
                     confopts['settings'].update({'disableuser': config.getboolean(section, 'disableuser')})
                     confopts['settings'].update({'excludeuser': config.get(section, 'excludeuser')})
+                    confopts['settings'].update({'cache': config.get(section, 'cache')})
+                    confopts['settings'].update({'mapuser': config.get(section, 'mapuser')})
+                    confopts['settings'].update({'backupdir': config.get(section, 'backupdir')})
 
             return confopts
 

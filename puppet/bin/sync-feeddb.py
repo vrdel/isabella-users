@@ -86,21 +86,23 @@ def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
 
+    cachedb = conf_opts['settings']['cache']
 
     parser = argparse.ArgumentParser(description="isabella-users-puppet sync DB")
-    parser.add_argument('-d', required=True, help='SQLite DB file', dest='sql')
+    parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     args = parser.parse_args()
 
     data = fetch_feeddata(conf_opts['external']['subscription'], logger)
 
-    data = fetch_feeddata(conf_opts['external']['subscription'], logger)
-    with open(conf_opts['external']['mapuser'], mode='r') as fp:
+    with open(conf_opts['settings']['mapuser'], mode='r') as fp:
         mapuser = json.loads(fp.read())
 
     if args.sql:
-        engine = create_engine('sqlite:///%s' % args.sql, echo=args.verbose)
+        cachedb = args.sql
+
+    engine = create_engine('sqlite:///%s' % cachedb, echo=args.verbose)
 
     Session = sessionmaker()
     Session.configure(bind=engine)

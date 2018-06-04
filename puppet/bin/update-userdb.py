@@ -13,8 +13,10 @@ from isabella_users_puppet.cachedb import Base, User, Projects
 from sqlalchemy import create_engine
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
-
+from isabella_users_puppet.config import parse_config
 import datetime
+
+conf_opts = parse_config()
 
 
 def is_date(date):
@@ -40,14 +42,18 @@ def all_false(cont):
 
 def main():
     parser = argparse.ArgumentParser(description="isabella-users-puppet disable user DB")
-    parser.add_argument('-d', required=True, help='SQLite DB file', dest='sql')
+    parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
     parser.add_argument('-t', required=True, help='YYY-MM-DD', type=is_date, dest='date')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     args = parser.parse_args()
 
+    cachedb = conf_opts['settings']['cache']
+
     if args.sql:
-        engine = create_engine('sqlite:///%s' % args.sql, echo=args.verbose)
+        cachedb = args.sql
+
+    engine = create_engine('sqlite:///%s' % cachedb, echo=args.verbose)
 
     Session = sessionmaker()
     Session.configure(bind=engine)

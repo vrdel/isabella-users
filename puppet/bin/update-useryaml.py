@@ -63,7 +63,7 @@ def all_false(cont):
 
 def backup_yaml(path, logger):
     try:
-        shutil.copy(path, conf_opts['external']['backupdir'])
+        shutil.copy(path, conf_opts['settings']['backupdir'])
 
     except shutil.Error as e:
         logger.error(e)
@@ -98,12 +98,14 @@ def main():
     logger = lobj.get()
 
     parser = argparse.ArgumentParser(description="isabella-users-puppet refresh user yaml")
-    parser.add_argument('-d', required=True, help='SQLite DB file', dest='sql')
+    parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     parser.add_argument('-n', required=False, default=False,
                         action='store_true', help='No operation, just print changes', dest='nop')
     args = parser.parse_args()
+
+    cachedb = conf_opts['settings']['cache']
 
     yusers = load_yaml(conf_opts['external']['isabellausersyaml'], logger)
     ycrongiusers = load_yaml(conf_opts['external']['crongiusersyaml'], logger)
@@ -111,7 +113,9 @@ def main():
     yamlcrongiusers = avail_users(ycrongiusers['crongi_users'])
 
     if args.sql:
-        engine = create_engine('sqlite:///%s' % args.sql, echo=args.verbose)
+        cachedb = args.sql
+
+    engine = create_engine('sqlite:///%s' % cachedb, echo=args.verbose)
 
     Session = sessionmaker()
     Session.configure(bind=engine)
