@@ -41,7 +41,8 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f INSTALLED_FILES
 %dir %{_sysconfdir}/%{name}/
-%config %attr(600,root,root) %{_sysconfdir}/%{name}/puppet.conf
+%config(noreplace) %attr(600,root,root) %{_sysconfdir}/%{name}/puppet.conf
+%config(noreplace) %attr(600,root,root) %{_sysconfdir}/%{name}/users.json
 %dir %{python_sitelib}/%{underscore %{name}}/
 %{python_sitelib}/%{underscore %{name}}/*.py[co]
 %dir %{_localstatedir}/log/%{name}/
