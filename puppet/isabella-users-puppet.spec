@@ -1,8 +1,17 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
+%define underscore() %(echo %1 | sed 's/-/_/g')
+%define stripc() %(echo %1 | sed 's/el7.centos/el7/')
+
+%if 0%{?el7:1}
+%define mydist %{stripc %{dist}}
+%else
+%define mydist %{dist}
+%endif
+
 Name:           isabella-users-puppet
 Version:        0.1.0
-Release:        2%{?dist}.srce
+Release:        2%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
 License:        GPL
@@ -17,7 +26,6 @@ Requires:       python-sqlalchemy
 Requires:       python-requests
 Requires:       PyYAML
 
-%define underscore() %(echo %1 | sed 's/-/_/g')
 
 %description
 Scripts for updating Puppet yaml with user accounts
