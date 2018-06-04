@@ -1,0 +1,6 @@
+include config/*
+include modules/*
+include bin/*
+include isabella-users-puppet.spec
+
+recursive-exclude pymodule *.pyc *.pyo
