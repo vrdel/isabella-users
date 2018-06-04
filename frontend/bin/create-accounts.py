@@ -19,10 +19,8 @@ from unidecode import unidecode
 from base64 import b64encode
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 
-import datetime
 import sys
 import requests
 import os
@@ -131,14 +129,18 @@ def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
 
+    cdb = conf_opts['settings']['cache']
+
     parser = argparse.ArgumentParser(description="isabella-users-frontend update users DB")
-    parser.add_argument('-d', required=True, help='SQLite DB file', dest='sql')
+    parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     args = parser.parse_args()
 
     if args.sql:
-        engine = create_engine('sqlite:///%s' % args.sql, echo=args.verbose)
+        cdb = args.sql
+
+    engine = create_engine('sqlite:///%s' % cdb, echo=args.verbose)
 
     Session = sessionmaker()
     Session.configure(bind=engine)

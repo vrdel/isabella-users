@@ -11,27 +11,34 @@ import argparse
 from isabella_users_frontend.cachedb import User
 from isabella_users_frontend.userutils import UserUtils
 from isabella_users_frontend.log import Logger
+from isabella_users_frontend.config import parse_config
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 
 import datetime
 import sys
+
+conf_opts = parse_config()
 
 
 def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
 
+    import pdb; pdb.set_trace()  # XXX BREAKPOINT
+    cdb = conf_opts['settings']['cache']
+
     parser = argparse.ArgumentParser(description="isabella-users-frontend update users DB")
-    parser.add_argument('-d', required=True, help='SQLite DB file', dest='sql')
+    parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     args = parser.parse_args()
 
     if args.sql:
-        engine = create_engine('sqlite:///%s' % args.sql, echo=args.verbose)
+        cdb = args.sql
+
+    engine = create_engine('sqlite:///%s' % cdb, echo=args.verbose)
 
     Session = sessionmaker()
     Session.configure(bind=engine)
@@ -66,7 +73,6 @@ def main():
 
     else:
         logger.info("No new users added in /etc/passwd")
-
 
 
 if __name__ == '__main__':

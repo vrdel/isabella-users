@@ -28,17 +28,31 @@ class UserUtils(object):
         comment = self.get_user_comment(userobj)
         name, surname, project = '', '', ''
         if comment:
-            if ',' in comment:
-                fullname, project = map(lambda x: x.strip(), comment.split(','))
-                name, surname = fullname.split(' ')
-            else:
-                name, surname = comment.split(' ')
+            try:
+                if ',' in comment:
+                    fullname, project = map(lambda x: x.strip(), comment.split(','))
+                    name, surname = fullname.split(' ')
+                else:
+                    name, surname = comment.split(' ')
+            except ValueError as e:
+                self.logger.error('{0}.{1}: user={2} {3}'.format(self.__class__.__name__,
+                                                                 'info_comment',
+                                                                 self.get_user_name(userobj),
+                                                                 str(e)))
 
         return name, surname, project
 
 
     def get_user_home(self, userobj):
-        return userobj.get(libuser.HOMEDIRECTORY)[0]
+        try:
+            return userobj.get(libuser.HOMEDIRECTORY)[0]
+
+        except IndexError as e:
+            self.logger.error('{0}.{1}: user={2} {3}'.format(self.__class__.__name__,
+                                                             'get_user_home',
+                                                             self.get_user_name(userobj),
+                                                             str(e)))
+
 
     def get_user_name(self, userobj):
         return userobj.get(libuser.USERNAME)[0]
