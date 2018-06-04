@@ -63,7 +63,7 @@ def all_false(cont):
 
 
 def backup_yaml(path, logger):
-    date = datetime.datetime.now().strftime('%Y-%m-%d')
+    date = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     try:
         shutil.copy(path, conf_opts['settings']['backupdir'] + \
                     '/' + os.path.basename(path) + '_%s' % date)
