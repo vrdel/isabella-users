@@ -44,7 +44,7 @@ class InfoAccOpen(object):
             try:
                 s = smtplib.SMTP(self.smtpserver, 25, timeout=120)
                 s.ehlo()
-                s.sendmail(self.emailfrom, [self.emailto], email_text)
+                s.sendmail(self.emailfrom, [self.emailto, self.emailfrom], email_text)
                 s.quit()
 
                 return True

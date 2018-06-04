@@ -2,7 +2,7 @@
 
 Name:           isabella-users-puppet
 Version:        0.1.0
-Release:        1%{?dist}.srce
+Release:        2%{?dist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
 License:        GPL
@@ -51,5 +51,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Mon Jun 4 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.0-2%{?dist}
+- added Logger definition in puppet update-userdb
 * Mon Jun 4 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.0-1%{?dist}
 - first release

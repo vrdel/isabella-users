@@ -8,7 +8,7 @@ pkg_resources.require(__requires__)
 
 import argparse
 
-from isabella_users_puppet.cachedb import Base, User, Projects, MaxUID
+from isabella_users_puppet.cachedb import User, MaxUID
 from isabella_users_puppet.log import Logger
 from isabella_users_puppet.config import parse_config
 
@@ -21,6 +21,7 @@ import sys
 import datetime
 import yaml
 import shutil
+import os
 
 conf_opts = parse_config()
 
@@ -62,8 +63,10 @@ def all_false(cont):
 
 
 def backup_yaml(path, logger):
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
     try:
-        shutil.copy(path, conf_opts['settings']['backupdir'])
+        shutil.copy(path, conf_opts['settings']['backupdir'] + \
+                    '/' + os.path.basename(path) + '_%s' % date)
 
     except shutil.Error as e:
         logger.error(e)
@@ -198,6 +201,8 @@ def main():
             f = session.query(MaxUID).first()
             f.uid = uid
             session.commit()
+    else:
+        logger.info("No actions needed")
 
 
 if __name__ == '__main__':

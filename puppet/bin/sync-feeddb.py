@@ -67,10 +67,6 @@ def gen_username(name, surname, existusers):
         return username + str(len(match))
 
 
-def to_unicode(s):
-    return unicode(s, 'utf-8')
-
-
 def concat(s):
     if '-' in s:
         s = s.split('-')
@@ -95,6 +91,8 @@ def main():
     args = parser.parse_args()
 
     data = fetch_feeddata(conf_opts['external']['subscription'], logger)
+
+    logger.info('Fetched %d projects' % len(data))
 
     with open(conf_opts['settings']['mapuser'], mode='r') as fp:
         mapuser = json.loads(fp.read())

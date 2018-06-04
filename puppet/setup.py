@@ -26,4 +26,4 @@ setup(name=NAME,
                                               'bin/sync-feeddb.py',
                                               'bin/update-userdb.py',
                                               'bin/update-useryaml.py']),
-                  ('/etc/cron.d', glob.glob('cronjobs/*'))])
+                  ])

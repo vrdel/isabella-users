@@ -26,7 +26,6 @@ def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
 
-    import pdb; pdb.set_trace()  # XXX BREAKPOINT
     cdb = conf_opts['settings']['cache']
 
     parser = argparse.ArgumentParser(description="isabella-users-frontend update users DB")

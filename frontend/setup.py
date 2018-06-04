@@ -26,4 +26,4 @@ setup(name=NAME,
                                               'bin/setup-db.py',
                                               'bin/update-userdb.py']),
                   ('/usr/libexec/%s/sgetools/' % NAME, glob.glob('helpers/sgetools/*')),
-                  ('/etc/cron.d', glob.glob('cronjobs/*'))])
+                  ])

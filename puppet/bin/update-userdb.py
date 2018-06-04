@@ -6,15 +6,18 @@ __requires__.append('SQLAlchemy >= 0.8.2')
 import pkg_resources
 pkg_resources.require(__requires__)
 
-import argparse
-
 from isabella_users_puppet.cachedb import Base, User, Projects
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 from isabella_users_puppet.config import parse_config
+from isabella_users_puppet.log import Logger
+
+import argparse
 import datetime
+import sys
+
 
 conf_opts = parse_config()
 
@@ -41,9 +44,12 @@ def all_false(cont):
 
 
 def main():
+    lobj = Logger(sys.argv[0])
+    logger = lobj.get()
+
     parser = argparse.ArgumentParser(description="isabella-users-puppet disable user DB")
     parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
-    parser.add_argument('-t', required=True, help='YYY-MM-DD', type=is_date, dest='date')
+    parser.add_argument('-t', required=False, help='YYY-MM-DD', type=is_date, dest='date')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     args = parser.parse_args()
@@ -53,14 +59,21 @@ def main():
     if args.sql:
         cachedb = args.sql
 
+    if args.date:
+        date = args.date
+    else:
+        date = datetime.date.today()
+
     engine = create_engine('sqlite:///%s' % cachedb, echo=args.verbose)
 
     Session = sessionmaker()
     Session.configure(bind=engine)
     session = Session()
 
+    logger.info("Update projects and users expired on %s" % date)
+
     for p in session.query(Projects):
-        if p.date_to < args.date:
+        if p.date_to < date:
             p.status = 0
         else:
             p.status = 1
