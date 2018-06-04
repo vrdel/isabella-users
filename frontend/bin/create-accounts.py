@@ -156,9 +156,13 @@ def main():
 
     not_home = session.query(User).filter(User.ishomecreated == False).all()
     for u in not_home:
-        rh = create_homedir(u.homedir, u.uid, u.gid, logger)
-        sharedpath = conf_opts['settings']['sharedpath']
-        rs = create_shareddir(sharedpath + u.username, u.uid, u.gid, logger)
+        if (os.path.exists(u.homedir) and
+            os.path.exists(conf_opts['settings']['sharedpath'])):
+            rh, rs = True, True
+        else:
+            rh = create_homedir(u.homedir, u.uid, u.gid, logger)
+            sharedpath = conf_opts['settings']['sharedpath']
+            rs = create_shareddir(sharedpath + u.username, u.uid, u.gid, logger)
         if all([rh, rs]):
             u.ishomecreated = True
     session.commit()
