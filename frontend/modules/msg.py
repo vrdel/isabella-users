@@ -26,6 +26,7 @@ class InfoAccOpen(object):
 
             m = MIMEText(text)
             m['From'] = self.emailfrom
+            m['Cc'] = self.emailfrom
             m['To'] = self.emailto
             m['Subject'] = 'Account na klasteru Isabella'
 
