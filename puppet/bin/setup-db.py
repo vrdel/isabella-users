@@ -86,9 +86,13 @@ def main():
         yamlcontent = load_yaml(args.usersfromyaml)
         for u, d in yamlcontent['isabella_users'].iteritems():
             try:
-                per, proj = d['comment'].split(',')
-                idproj = proj.strip()
-                proj = filter(lambda x: str(x[pr2l['id']]) == idproj, csvprojects)[0]
+                if ',' in d['comment']:
+                    per, proj = d['comment'].split(',')
+                    idproj = proj.strip()
+                    proj = filter(lambda x: str(x[pr2l['id']]) == idproj, csvprojects)[0]
+                else:
+                    per = d['comment'].strip()
+                    idproj, proj = None, None
 
             except (IndexError, ValueError) as e:
                 print "Projects not found: %s, %s" % (per, idproj)
@@ -97,35 +101,46 @@ def main():
             try:
                 u = session.query(User).filter(User.username == u).one()
                 continue
+
             except NoResultFound:
-                u = User(feedid=0, username=u, name=to_unicode(per.split(' ')[0]),
-                         surname=to_unicode(per.split(' ')[1]), mail='',
-                         date_join=datetime.strptime('1970-01-01', '%Y-%m-%d'),
-                         status=1, last_project='')
+                try:
+                    u = User(feedid=0, username=u, name=to_unicode(per.split(' ')[0]),
+                            surname=to_unicode(per.split(' ')[1]), mail='',
+                            date_join=datetime.strptime('1970-01-01', '%Y-%m-%d'),
+                            status=1, last_project='')
+
+                except IndexError as e:
+                    print "Cannot build name and surname for %s" % u
+                    continue
+
             except MultipleResultsFound as e:
                 print str(e) + ' for user' + u
                 continue
 
-            try:
-                p = session.query(Projects).filter(Projects.idproj == idproj).one()
-            except NoResultFound:
+            if proj:
                 try:
-                    status = int(proj[pr2l['status']])
-                except ValueError:
-                    status = 1 if proj[pr2l['status']] == 'active' else 0
-                p = Projects(feedid=0, idproj=idproj,
-                             respname=to_unicode(proj[pr2l['respname']]),
-                             respemail=to_unicode(proj[pr2l['respemail']]),
-                             date_from=datetime.strptime(proj[pr2l['datefrom']],
-                                                         '%Y-%m-%d'),
-                             date_to=datetime.strptime(proj[pr2l['dateto']],
-                                                       '%Y-%m-%d'),
-                             name=to_unicode(proj[pr2l['name']]),
-                             date_created=datetime.strptime(proj[pr2l['datecreate']],
+                    p = session.query(Projects).filter(Projects.idproj == idproj).one()
+                except NoResultFound:
+                    try:
+                        status = int(proj[pr2l['status']])
+                    except ValueError:
+                        status = 1 if proj[pr2l['status']] == 'active' else 0
+                    p = Projects(feedid=0, idproj=idproj,
+                                respname=to_unicode(proj[pr2l['respname']]),
+                                respemail=to_unicode(proj[pr2l['respemail']]),
+                                date_from=datetime.strptime(proj[pr2l['datefrom']],
                                                             '%Y-%m-%d'),
-                             status=status,
-                             institution=to_unicode(proj[pr2l['inst']]))
-            u.projects.extend([p])
+                                date_to=datetime.strptime(proj[pr2l['dateto']],
+                                                        '%Y-%m-%d'),
+                                name=to_unicode(proj[pr2l['name']]),
+                                date_created=datetime.strptime(proj[pr2l['datecreate']],
+                                                                '%Y-%m-%d'),
+                                status=status,
+                                institution=to_unicode(proj[pr2l['inst']]))
+                u.projects.extend([p])
+            else:
+                u.projects.extend([])
+
             session.add(u)
             session.commit()
 
