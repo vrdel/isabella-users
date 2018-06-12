@@ -165,6 +165,7 @@ def main():
             rs = create_shareddir(sharedpath + u.username, u.uid, u.gid, logger)
         if all([rh, rs]):
             u.ishomecreated = True
+            logger.info('Created directories for %s' % u.username)
     session.commit()
 
     not_sge = session.query(User).filter(User.issgeadded == False).all()
@@ -175,9 +176,10 @@ def main():
             subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, u.username, u.last_project),
                                   shell=True, bufsize=512)
             u.issgeadded = True
+            logger.info('User added in SGE %s' % u.username)
 
         except Exception as e:
-            logger.error('Failed adding user %s to SGE: %s ' % (u.username, str(e)))
+            logger.error('Failed adding user %s to SGE: %s' % (u.username, str(e)))
     session.commit()
 
     not_password = session.query(User).filter(User.ispasswordset == False).all()
@@ -201,6 +203,7 @@ def main():
         r = e.send()
         if r:
             u.issentemail = True
+            logger.info('Mail sent for %s' % u.username)
     session.commit()
 
     not_subscribed = session.query(User).filter(User.issubscribe == False).all()
@@ -210,6 +213,7 @@ def main():
         r = subscribe_maillist(token, listname, u.email, u.username, logger)
         if r:
             u.issubscribe = True
+            logger.info('User %s subscribed to %s' % (u.username, listname))
     session.commit()
 
 
