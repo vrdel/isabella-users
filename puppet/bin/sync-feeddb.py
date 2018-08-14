@@ -129,9 +129,12 @@ def main():
             usersfeed = set([(concat(unidecode(uf['ime'])), concat(unidecode(uf['prezime']))) for uf in users])
             diff = usersdb.difference(usersfeed)
 
+        allusernames = set([username[0] for username in session.query(User.username).all()])
         for user in users:
             feedname = concat(unidecode(user['ime']))
             feedsurname = concat(unidecode(user['prezime']))
+            feeduid = user['uid']
+            feedemail = user['mail']
             for mu in mapuser:
                 munc = concat(unidecode(mu['from']['name']))
                 musc = concat(unidecode(mu['from']['surname']))
@@ -139,15 +142,22 @@ def main():
                     feedname = concat(mu['to']['name'])
                     feedsurname = concat(mu['to']['surname'])
             try:
-                u = session.query(User).filter(
-                    and_(User.name == feedname,
-                         User.surname == feedsurname)).one()
+                u = session.query(User).filter(User.feeduid == feeduid).one()
+                u.mail = feedemail
+                u.name = feedname
+                u.surname = feedsurname
             except NoResultFound:
-                allusernames = set([username[0] for username in session.query(User.username).all()])
-                u = User(feedid=user['id'], username=gen_username(feedname, feedsurname, allusernames),
-                         name=feedname, surname=feedsurname, feeduid=user['uid'], mail=user['mail'],
-                         date_join=datetime.now(),
-                         status=int(user['status_id']), last_project='')
+                try:
+                    u = session.query(User).filter(
+                        and_(User.name == feedname,
+                            User.surname == feedsurname)).one()
+                    u.feeduid = feeduid
+                    u.mail = feedemail
+                except NoResultFound:
+                    u = User(feedid=user['id'], username=gen_username(feedname, feedsurname, allusernames),
+                            name=feedname, surname=feedsurname, feeduid=feeduid, mail=feedemail,
+                            date_join=datetime.now(),
+                            status=int(user['status_id']), last_project='')
             p.users.extend([u])
         if diff:
             for ud in diff:
