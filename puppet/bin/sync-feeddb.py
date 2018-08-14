@@ -150,14 +150,14 @@ def main():
                 try:
                     u = session.query(User).filter(
                         and_(User.name == feedname,
-                            User.surname == feedsurname)).one()
+                             User.surname == feedsurname)).one()
                     u.feeduid = feeduid
                     u.mail = feedemail
                 except NoResultFound:
                     u = User(feedid=user['id'], username=gen_username(feedname, feedsurname, allusernames),
-                            name=feedname, surname=feedsurname, feeduid=feeduid, mail=feedemail,
-                            date_join=datetime.now(),
-                            status=int(user['status_id']), last_project='')
+                             name=feedname, surname=feedsurname, feeduid=feeduid, mail=feedemail,
+                             date_join=datetime.now(),
+                             status=int(user['status_id']), last_project='')
             p.users.extend([u])
         if diff:
             for ud in diff:
