@@ -133,8 +133,8 @@ def main():
             feedname = concat(unidecode(user['ime']))
             feedsurname = concat(unidecode(user['prezime']))
             for mu in mapuser:
-                munc = concat(mu['from']['name'])
-                musc = concat(mu['from']['surname'])
+                munc = concat(unidecode(mu['from']['name']))
+                musc = concat(unidecode(mu['from']['surname']))
                 if feedname == munc and feedsurname == musc:
                     feedname = concat(mu['to']['name'])
                     feedsurname = concat(mu['to']['surname'])
