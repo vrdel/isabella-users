@@ -145,7 +145,7 @@ def main():
             except NoResultFound:
                 allusernames = set([username[0] for username in session.query(User.username).all()])
                 u = User(feedid=user['id'], username=gen_username(feedname, feedsurname, allusernames),
-                         name=feedname, surname=feedsurname, mail=user['mail'],
+                         name=feedname, surname=feedsurname, feeduid=user['uid'], mail=user['mail'],
                          date_join=datetime.now(),
                          status=int(user['status_id']), last_project='')
             p.users.extend([u])

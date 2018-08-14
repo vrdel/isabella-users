@@ -21,18 +21,20 @@ class User(Base):
     username = Column(Unicode(8))
     name = Column(Unicode(20))
     surname = Column(Unicode(40))
+    feeduid = Column(Unicode(60))
     mail = Column(Unicode(60))
     status = Column(Integer)
     date_join = Column(Date)
     last_project = Column(Unicode(40))
     projects = relationship("Projects", secondary="assign", backref=backref('users', order_by=id))
 
-    def __init__(self, feedid, username, name, surname, mail, date_join,
-                 status, last_project):
+    def __init__(self, feedid, username, name, surname, feeduid, mail,
+                 date_join, status, last_project):
         self.feedid = feedid
         self.username = username
         self.name = name
         self.surname = surname
+        self.feeduid = feeduid
         self.mail = mail
         self.date_join = date_join
         self.status = status
