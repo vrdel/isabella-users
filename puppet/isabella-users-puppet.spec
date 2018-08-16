@@ -10,8 +10,8 @@
 %endif
 
 Name:           isabella-users-puppet
-Version:        0.1.0
-Release:        3%{?mydist}.srce
+Version:        0.1.1
+Release:        1%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
 License:        GPL
@@ -60,6 +60,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Thu Aug 16 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.1-1%{?dist}
+- update project's timelines to the most recent
+- lookup firstly by AAI uid 
+- store also AAI uid
+- transliterate map user data to ASCII
 * Thu Jun 7 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.0-3%{?dist}
 - do not replace configs on update
 - backup yaml with h:m:s timestamp 
