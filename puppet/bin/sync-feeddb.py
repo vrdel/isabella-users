@@ -113,6 +113,10 @@ def main():
         idproj = project['sifra']
         try:
             p = session.query(Projects).filter(Projects.idproj == idproj).one()
+            # update project timeline to most recent one as it is needed if
+            # project is prolong
+            p.date_from = datetime.strptime(project['date_from'], '%Y-%m-%d')
+            p.date_to = datetime.strptime(project['date_to'], '%Y-%m-%d')
         except NoResultFound:
             p = Projects(feedid=project['id'], idproj=idproj,
                          respname='', respemail='', institution='', name='',
