@@ -22,6 +22,64 @@ import sys
 conf_opts = parse_config()
 
 
+def diff_users(session, db, passwd):
+    upd = dict()
+
+    for k, v in passwd.iteritems():
+        if k:
+            users_db = set(u[0] for u in session.query(User.username).filter(User.last_project == k).all())
+            users_passwd = set(passwd[k])
+            if len(users_db) != len(users_passwd):
+                users_add = users_passwd.difference(users_db)
+                users_del = users_db.difference(users_passwd)
+                upd[k] = {'add': users_add,
+                        'del': users_del}
+
+    return upd
+
+
+def diff_projects(db, passwd):
+    psd = dict()
+    dbk = set(db.keys())
+    pwdk = set(passwd.keys())
+    diff = pwdk.difference(dbk)
+
+    for p in diff:
+        psd.update({p: passwd[p]})
+
+    return psd
+
+
+def assign_projectusers(session, pu):
+    if len(pu) >= 1:
+        for k, v in pu.iteritems():
+            users = session.query(User).filter(User.username.in_(v)).all()
+            for u in users:
+                u.last_project = k
+
+        session.commit()
+
+        return True
+
+    else:
+        return False
+
+
+def db_projects_users(session=None):
+    all_projects_user_db = dict()
+
+    if session:
+        for u in session.query(User).all():
+            p = u.last_project
+            if p in all_projects_user_db:
+                all_projects_user_db[p].append(u.username)
+            else:
+                all_projects_user_db[p] = list()
+                all_projects_user_db[p].append(u.username)
+
+    return all_projects_user_db
+
+
 def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
@@ -45,6 +103,9 @@ def main():
 
     usertool = UserUtils(logger)
 
+    # create new users by comparing user entries in /etc/passwd and in
+    # cache.db. if user exists in /etc/passwd but not in cache.db, we have a new
+    # one.
     allusers_passwd = set(usertool.all_users_list())
     allusers_db = set([u[0] for u in session.query(User.username).all()])
     diff = allusers_passwd.difference(allusers_db)
@@ -72,6 +133,31 @@ def main():
 
     else:
         logger.info("No new users added in /etc/passwd")
+
+    # update (project, user) assignments by creating associations from
+    # /etc/passwd and from cache.db. if they differ, update last_project field
+    # for user.
+    all_projects_users_passwd = usertool.all_projects_users()
+    all_projects_users_db = db_projects_users(session)
+
+    pjs = diff_projects(all_projects_users_db, all_projects_users_passwd)
+    if assign_projectusers(session, pjs):
+        for k, v in pjs.iteritems():
+            logger.info('Users %s assigned to project %s' % (v, k))
+
+    all_projects_users_db = db_projects_users(session)
+    upjs = diff_users(session, all_projects_users_db, all_projects_users_passwd)
+    if upjs:
+        for k, v in upjs.iteritems():
+            ptmp = dict()
+            ptmp[k] = v['add']
+            if ptmp[k] and assign_projectusers(session, ptmp):
+                logger.info('Users %s reassigned to project %s' % (v['add'], k))
+
+            ptmp = dict()
+            ptmp[k] = v['del']
+            if ptmp[k]:
+                logger.warning('Users %s sign-off from project %s' % (v['del'], k))
 
 
 if __name__ == '__main__':

@@ -24,6 +24,22 @@ class UserUtils(object):
         return users
 
 
+    def all_projects_users(self):
+        projects = dict()
+        users = self.all_users()
+
+        for u in users:
+            name, surname, project = self.info_comment(u)
+
+            if project in projects:
+                projects[project].append(self.get_user_name(u))
+            else:
+                projects[project] = list()
+                projects[project].append(self.get_user_name(u))
+
+        return projects
+
+
     def info_comment(self, userobj):
         comment = self.get_user_comment(userobj)
         name, surname, project = '', '', ''
