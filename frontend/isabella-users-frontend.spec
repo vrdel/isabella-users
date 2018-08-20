@@ -2,7 +2,7 @@
 
 Name:           isabella-users-frontend
 Version:        0.1.1
-Release:        1%{?dist}.srce
+Release:        2%{?dist}.srce
 Summary:        Scripts for opening user accounts on SRCE Isabella cluster
 Group:          Applications/System
 License:        GPL
@@ -49,8 +49,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
-* Mon Aug 20 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.1-1%{?dist}
+* Mon Aug 20 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.1-2%{?dist}
 - update SGE and cache DB user assignments to last projects 
+- no log warning for signoffs
 * Tue Jun 12 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.0-3%{?dist}
 - added log msgs about done actions 
 * Mon Jun 4 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.0-2%{?dist}

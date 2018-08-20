@@ -33,7 +33,7 @@ def diff_users(session, db, passwd):
                 users_add = users_passwd.difference(users_db)
                 users_del = users_db.difference(users_passwd)
                 upd[k] = {'add': users_add,
-                        'del': users_del}
+                          'del': users_del}
 
     return upd
 
@@ -63,7 +63,6 @@ def unsign_projectusers(session, pu):
 
     else:
         return False
-
 
 
 def assign_projectusers(session, pu):
