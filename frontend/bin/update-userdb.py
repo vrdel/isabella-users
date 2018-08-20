@@ -178,7 +178,7 @@ def main():
             ptmp = dict()
             ptmp[k] = v['del']
             if ptmp[k] and unsign_projectusers(session, ptmp):
-                logger.warning('Users %s signoff from project %s' % (v['del'], k))
+                logger.info('Users %s signoff from project %s' % (v['del'], k))
 
 
 if __name__ == '__main__':
