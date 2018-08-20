@@ -50,6 +50,22 @@ def diff_projects(db, passwd):
     return psd
 
 
+def unsign_projectusers(session, pu):
+    if len(pu) >= 1:
+        for k, v in pu.iteritems():
+            users = session.query(User).filter(User.username.in_(v)).all()
+            for u in users:
+                u.last_project = ''
+
+        session.commit()
+
+        return True
+
+    else:
+        return False
+
+
+
 def assign_projectusers(session, pu):
     if len(pu) >= 1:
         for k, v in pu.iteritems():
@@ -135,16 +151,21 @@ def main():
         logger.info("No new users added in /etc/passwd")
 
     # update (project, user) assignments by creating associations from
-    # /etc/passwd and from cache.db. if they differ, update last_project field
-    # for user.
+    # /etc/passwd and from cache.db. if they differ, there's new project and
+    # update last_project field for user assigned to new project.
     all_projects_users_passwd = usertool.all_projects_users()
     all_projects_users_db = db_projects_users(session)
 
     pjs = diff_projects(all_projects_users_db, all_projects_users_passwd)
     if assign_projectusers(session, pjs):
         for k, v in pjs.iteritems():
-            logger.info('Users %s assigned to project %s' % (v, k))
+            if k:
+                logger.info('Users %s assigned to project %s' % (v, k))
+            else:
+                logger.info('Users %s signoff from last project' % v)
 
+    # update user assignments to existing projects changing his last_project
+    # field
     all_projects_users_db = db_projects_users(session)
     upjs = diff_users(session, all_projects_users_db, all_projects_users_passwd)
     if upjs:
@@ -156,8 +177,8 @@ def main():
 
             ptmp = dict()
             ptmp[k] = v['del']
-            if ptmp[k]:
-                logger.warning('Users %s sign-off from project %s' % (v['del'], k))
+            if ptmp[k] and unsign_projectusers(session, ptmp):
+                logger.warning('Users %s signoff from project %s' % (v['del'], k))
 
 
 if __name__ == '__main__':
