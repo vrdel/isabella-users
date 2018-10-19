@@ -11,7 +11,7 @@
 
 Name:           isabella-users-frontend
 Version:        0.1.1
-Release:        2%{?mydist}.srce
+Release:        3%{?mydist}.srce
 Summary:        Scripts for opening user accounts on SRCE Isabella cluster
 Group:          Applications/System
 License:        GPL
@@ -23,7 +23,7 @@ BuildRequires:  python2-devel
 Requires:       python-unidecode
 Requires:       libuser-python
 Requires:       python-argparse
-Requires:       python-sqlalchemy0.8
+Requires:       python-sqlalchemy
 Requires:       python-requests
 
 
@@ -57,6 +57,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Fri Oct 19 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.1-3%{?dist}
+- match new qconf output for project and user exist check
+- update SQLAlchemy dependency for only Centos 7  
 * Mon Aug 20 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.1-2%{?dist}
 - update SGE and cache DB user assignments to last projects 
 - no log warning for signoffs
