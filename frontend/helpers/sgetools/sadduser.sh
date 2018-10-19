@@ -49,7 +49,7 @@ else
 fi
 
 
-project_exists=`$QCONF -sprj $2 2>&1 | grep 'is not known as project'`
+project_exists=`$QCONF -sprj $2 2>&1 | grep 'is not known as a project'`
 if [ -n "$project_exists" ]; then
     # create new project
     echo "INFO: Creating new project $2"
@@ -64,7 +64,7 @@ else
     echo "INFO: Project $2 already exists"
 fi
 
-user_exists=`$QCONF -suser $1 2>&1 | grep 'is not known as user'`
+user_exists=`$QCONF -suser $1 2>&1 | grep 'is not known as a user'`
 if [ -n "$user_exists" ]; then
     # create new user 
     echo "INFO: Creating new user $1"
