@@ -95,6 +95,10 @@ def db_projects_users(session=None):
     return all_projects_user_db
 
 
+def str_iterable(s):
+    return ', '.join(s)
+
+
 def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
@@ -144,7 +148,7 @@ def main():
             session.add(u)
 
         session.commit()
-        logger.info("New users added into DB: %s" % diff)
+        logger.info("New users added into DB: %s" % str_iterable(diff))
 
     else:
         logger.info("No new users added in /etc/passwd")
@@ -159,9 +163,9 @@ def main():
     if assign_projectusers(session, pjs):
         for k, v in pjs.iteritems():
             if k:
-                logger.info('Users %s assigned to project %s' % (v, k))
+                logger.info('Users %s assigned to project %s' % (str_iterable(v), k))
             else:
-                logger.info('Users %s signoff from last project' % v)
+                logger.info('Users %s signoff from last project' % str_iterable(v))
 
     # update user assignments to existing projects changing his last_project
     # field
@@ -172,12 +176,12 @@ def main():
             ptmp = dict()
             ptmp[k] = v['add']
             if ptmp[k] and assign_projectusers(session, ptmp):
-                logger.info('Users %s reassigned to project %s' % (v['add'], k))
+                logger.info('Users %s reassigned to project %s' % (str_iterable(v['add']), k))
 
             ptmp = dict()
             ptmp[k] = v['del']
             if ptmp[k] and unsign_projectusers(session, ptmp):
-                logger.info('Users %s signoff from project %s' % (v['del'], k))
+                logger.info('Users %s signoff from project %s' % (str_iterable(v['del']), k))
 
 
 if __name__ == '__main__':
