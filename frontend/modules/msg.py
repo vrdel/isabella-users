@@ -24,7 +24,7 @@ class InfoAccOpen(object):
             text = text.replace('__USERNAME__', self.username)
             text = text.replace('__PASSWORD__', self.password)
 
-            m = MIMEText(text)
+            m = MIMEText(text, 'plain', 'utf-8')
             m['From'] = self.emailfrom
             m['Cc'] = self.emailfrom
             m['To'] = self.emailto
