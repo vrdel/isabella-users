@@ -32,6 +32,51 @@ def avail_users(stream):
     return users
 
 
+def user_projects_db(yamlusers, skipusers, session):
+    projects = list()
+
+    for (key, value) in yamlusers.iteritems():
+        if key in skipusers:
+            continue
+
+        user_db = session.query(User).filter(User.username == key).one()
+        projects.append(user_db.last_project)
+
+    return projects
+
+
+def user_projects_yaml(yamlusers, skipusers):
+    projects = list()
+
+    for (key, value) in yamlusers.iteritems():
+        if key in skipusers:
+            continue
+
+        project = value['comment'].split(',')
+        if len(project) > 1:
+            projects.append(unicode(project[1][1:]))
+        else:
+            projects.append('')
+
+    return projects
+
+
+def user_projects_changed(yaml, db, logger):
+    changed = False
+
+    if len(yaml) == len(db):
+        for (i, p) in enumerate(yaml):
+            if p != db[i]:
+                changed = True
+                print p, i, db[i]
+    else:
+        logger.error('DB and YAML out of sync')
+
+        raise SystemExit(1)
+
+    return changed
+
+
 def is_date(date):
     try:
         _ = datetime.datetime.strptime(date, '%Y-%m-%d')
@@ -124,11 +169,17 @@ def main():
     Session.configure(bind=engine)
     session = Session()
 
+    skipusers = conf_opts['settings']['excludeuser']
+    skipusers = set([u.strip() for u in skipusers.split(',')])
+
     users = session.query(User).all()
     maxuid = session.query(MaxUID).first()
     usersdb = set(u.username for u in users)
     newusers = usersdb.difference(yamlusers)
     newincrongi = newusers.intersection(yamlcrongiusers)
+    yamlprojects = user_projects_yaml(yusers['isabella_users'], skipusers)
+    dbprojects = user_projects_db(yusers['isabella_users'], skipusers, session)
+    usertoprojects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
 
     if args.nop:
         print "Accounts to be opened:"
@@ -172,8 +223,6 @@ def main():
             newusersd.update({unidecode(udb.username): newuser})
 
         allusers = merge_users(yusers['isabella_users'], newusersd)
-        skipusers = conf_opts['settings']['excludeuser']
-        skipusers = set([u.strip() for u in skipusers.split(',')])
         for u, d in allusers.iteritems():
             if u in skipusers:
                 continue
