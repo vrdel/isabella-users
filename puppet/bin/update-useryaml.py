@@ -8,7 +8,7 @@ pkg_resources.require(__requires__)
 
 import argparse
 
-from isabella_users_puppet.cachedb import User, MaxUID
+from isabella_users_puppet.cachedb import User, MaxUID, Projects
 from isabella_users_puppet.log import Logger
 from isabella_users_puppet.config import parse_config
 
@@ -54,7 +54,7 @@ def user_projects_yaml(yamlusers, skipusers):
 
         project = value['comment'].split(',')
         if len(project) > 1:
-            projects.append(unicode(project[1][1:]))
+            projects.append(project[1][1:])
         else:
             projects.append('')
 
@@ -62,13 +62,12 @@ def user_projects_yaml(yamlusers, skipusers):
 
 
 def user_projects_changed(yaml, db, logger):
-    changed = False
+    changed = list()
 
     if len(yaml) == len(db):
-        for (i, p) in enumerate(yaml):
-            if p != db[i]:
-                changed = True
-                print p, i, db[i]
+        for (i, p) in enumerate(db):
+            if p != yaml[i]:
+                changed.append(p)
     else:
         logger.error('DB and YAML out of sync')
 
@@ -186,6 +185,8 @@ def main():
         print
         print "Diff DB - YAML"
         print newusers
+        print "Changed projects"
+        print usertoprojects_changed
         print
         print "From CRO-NGI"
         print newincrongi
@@ -250,6 +251,33 @@ def main():
             f = session.query(MaxUID).first()
             f.uid = uid
             session.commit()
+
+    elif usertoprojects_changed:
+        try:
+            changed_users = list()
+
+            projectschanged_db = session.query(Projects).filter(Projects.idproj.in_(usertoprojects_changed)).all()
+            for p in projectschanged_db:
+                users = p.users
+                for u in users:
+                    yaml_user = yusers['isabella_users'][u.username]
+                    yaml_project = yaml_user['comment'].split(',')
+                    if yaml_project:
+                        yaml_project = yaml_project[1][1:]
+                    if yaml_project != u.last_project:
+                        changed_users.append((u.username, u.last_project))
+                        yaml_user['comment'] = '{0} {1}, {2}'.format(u.name, u.surname, u.last_project)
+
+        except NoResultFound as e:
+            logger.error('{1} {0}'.format(u, str(e)))
+            pass
+
+        backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
+        r = write_yaml(conf_opts['external']['isabellausersyaml'], {'isabella_users': yusers['isabella_users']}, logger)
+        if r:
+            logger.info("Update associations of existing users to projects: %s " %
+                        ', '.join(['{0} assigned to {1}'.format(t[0], t[1]) for t in changed_users]))
+
     else:
         logger.info("No actions needed")
 
