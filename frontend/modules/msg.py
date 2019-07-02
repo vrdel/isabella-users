@@ -1,17 +1,21 @@
+# -*- coding: utf-8 -*-
+
 from email.mime.text import MIMEText
+from email.header import Header
 import datetime
 import smtplib
 import socket
 
 class InfoAccOpen(object):
-    def __init__(self, username, password, templatepath,
-                 smtpserver, emailfrom, emailto, logger):
+    def __init__(self, username, password, templatepath, smtpserver, emailfrom,
+                 emailto, emailsubject, logger):
         self.username = username
         self.password = password
         self.templatepath = templatepath
         self.smtpserver = smtpserver
         self.emailfrom = emailfrom
         self.emailto = emailto
+        self.emailsubject = emailsubject
         self.logger = logger
 
     def _construct_email(self):
@@ -28,7 +32,7 @@ class InfoAccOpen(object):
             m['From'] = self.emailfrom
             m['Cc'] = self.emailfrom
             m['To'] = self.emailto
-            m['Subject'] = 'Account na klasteru Isabella'
+            m['Subject'] = Header(self.emailsubject, 'utf-8')
 
             return m.as_string()
 

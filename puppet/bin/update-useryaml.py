@@ -178,7 +178,7 @@ def main():
     newincrongi = newusers.intersection(yamlcrongiusers)
     yamlprojects = user_projects_yaml(yusers['isabella_users'], skipusers)
     dbprojects = user_projects_db(yusers['isabella_users'], skipusers, session)
-    usertoprojects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
+    projects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
 
     if args.nop:
         print "Accounts to be opened:"
@@ -186,7 +186,7 @@ def main():
         print "Diff DB - YAML"
         print newusers
         print "Changed projects"
-        print usertoprojects_changed
+        print projects_changed
         print
         print "From CRO-NGI"
         print newincrongi
@@ -252,11 +252,11 @@ def main():
             f.uid = uid
             session.commit()
 
-    elif usertoprojects_changed:
+    elif projects_changed:
         try:
             changed_users = list()
 
-            projectschanged_db = session.query(Projects).filter(Projects.idproj.in_(usertoprojects_changed)).all()
+            projectschanged_db = session.query(Projects).filter(Projects.idproj.in_(projects_changed)).all()
             for p in projectschanged_db:
                 users = p.users
                 for u in users:

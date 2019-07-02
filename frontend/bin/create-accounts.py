@@ -217,11 +217,12 @@ def main():
         templatepath = conf_opts['external']['emailtemplate']
         smtpserver = conf_opts['external']['emailsmtp']
         emailfrom = conf_opts['external']['emailfrom']
+        emailsubject = conf_opts['external']['emailsubject']
         email = extract_email(projects, u.name, u.surname, u.last_project)
         u.email = email
 
         e = InfoAccOpen(u.username, u.password, templatepath, smtpserver,
-                        emailfrom, email, logger)
+                        emailfrom, email, emailsubject, logger)
         r = e.send()
         if r:
             u.issentemail = True
