@@ -135,9 +135,12 @@ def main():
 
         allusernames = set([username[0] for username in session.query(User.username).all()])
         for user in users:
+            u_dup = None
             feedname = concat(unidecode(user['ime']))
             feedsurname = concat(unidecode(user['prezime']))
             feeduid = user['uid']
+            if feeduid == 'atomic@fkit.hr':
+                import ipdb; ipdb.set_trace()
             feedemail = user['mail']
             for mu in mapuser:
                 munc = concat(unidecode(mu['from']['name']))
@@ -145,6 +148,8 @@ def main():
                 if feedname == munc and feedsurname == musc:
                     feedname = concat(mu['to']['name'])
                     feedsurname = concat(mu['to']['surname'])
+
+            # lookup first by uid
             try:
                 u = session.query(User).filter(User.feeduid == feeduid).one()
                 u.mail = feedemail
@@ -152,17 +157,32 @@ def main():
                 u.surname = feedsurname
             except NoResultFound:
                 try:
+                    # uid not found, lookup by name and surname
                     u = session.query(User).filter(
                         and_(User.name == feedname,
                              User.surname == feedsurname)).one()
-                    u.feeduid = feeduid
-                    u.mail = feedemail
+                    # if found, but with different uid - we have a duplicate
+                    if u.feeduid != feeduid:
+                        u_dup = User(feedid=user['id'],
+                                     username=gen_username(feedname,
+                                                           feedsurname,
+                                                           allusernames),
+                                     name=feedname, surname=feedsurname,
+                                     feeduid=feeduid, mail=feedemail,
+                                     date_join=datetime.now(),
+                                     status=int(user['status_id']),
+                                     last_project='')
+                    else:
+                        u.mail = feedemail
                 except NoResultFound:
                     u = User(feedid=user['id'], username=gen_username(feedname, feedsurname, allusernames),
                              name=feedname, surname=feedsurname, feeduid=feeduid, mail=feedemail,
                              date_join=datetime.now(),
                              status=int(user['status_id']), last_project='')
-            p.users.extend([u])
+            if u_dup:
+                p.users.extend([u, u_dup])
+            else:
+                p.users.extend([u])
         if diff:
             for ud in diff:
                 u = session.query(User).filter(and_(User.name == ud[0], User.surname == ud[1])).one()
