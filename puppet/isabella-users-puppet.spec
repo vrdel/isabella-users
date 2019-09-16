@@ -10,7 +10,7 @@
 %endif
 
 Name:           isabella-users-puppet
-Version:        0.1.1
+Version:        0.1.3
 Release:        1%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
@@ -60,6 +60,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Mon Sep 16 2019 Daniel Vrcic <dvrcic@srce.hr> - 0.1.3-1%{?dist}
+- handle users with same name and surname
+* Wed Jul 3 2019 Daniel Vrcic <dvrcic@srce.hr> - 0.1.2-1%{?dist}
+- update associations of existing users to existing projects
 * Thu Aug 16 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.1-1%{?dist}
 - update project's timelines to the most recent
 - lookup firstly by AAI uid 
