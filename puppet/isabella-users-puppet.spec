@@ -11,7 +11,7 @@
 
 Name:           isabella-users-puppet
 Version:        0.1.3
-Release:        1%{?mydist}.srce
+Release:        2%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
 License:        GPL
@@ -60,6 +60,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Tue Sep 17 2019 Daniel Vrcic <dvrcic@srce.hr> - 0.1.3-2%{?dist}
+- remove debugger leftover
 * Mon Sep 16 2019 Daniel Vrcic <dvrcic@srce.hr> - 0.1.3-1%{?dist}
 - handle users with same name and surname
 * Wed Jul 3 2019 Daniel Vrcic <dvrcic@srce.hr> - 0.1.2-1%{?dist}

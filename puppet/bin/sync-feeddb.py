@@ -139,8 +139,6 @@ def main():
             feedname = concat(unidecode(user['ime']))
             feedsurname = concat(unidecode(user['prezime']))
             feeduid = user['uid']
-            if feeduid == 'atomic@fkit.hr':
-                import ipdb; ipdb.set_trace()
             feedemail = user['mail']
             for mu in mapuser:
                 munc = concat(unidecode(mu['from']['name']))
