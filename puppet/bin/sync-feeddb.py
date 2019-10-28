@@ -29,7 +29,6 @@ conf_opts = parse_config()
 
 def fetch_feeddata(subscription, logger):
     statuses_users = dict()
-    users = dict()
 
     try:
         response = requests.get(subscription, timeout=connection_timeout, verify=False)
@@ -43,8 +42,6 @@ def fetch_feeddata(subscription, logger):
 
     except Exception as e:
         logger.error(e)
-
-    return users.values()
 
 
 def gen_username(name, surname, existusers):
