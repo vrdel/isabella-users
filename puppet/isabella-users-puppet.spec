@@ -10,15 +10,15 @@
 %endif
 
 Name:           isabella-users-puppet
-Version:        0.1.3
-Release:        3%{?mydist}.srce
+Version:        0.1.4
+Release:        1%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
 License:        GPL
-URL:            https://github.com/vrdel/isabella-users 
+URL:            https://github.com/vrdel/isabella-users
 Source0:        %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildArch:      noarch 
+BuildArch:      noarch
 BuildRequires:  python2-devel
 Requires:       python-unidecode
 Requires:       python-argparse
@@ -60,6 +60,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Tue Feb 11 2020 Daniel Vrcic <dvrcic@srce.hr> - 0.1.4-1%{?dist}
+* take into account skipusers for projects changes only
 * Mon Oct 28 2019 Daniel Vrcic <dvrcic@srce.hr> - 0.1.3-3%{?dist}
 - skip HTC only projects
 * Tue Sep 17 2019 Daniel Vrcic <dvrcic@srce.hr> - 0.1.3-2%{?dist}
@@ -70,12 +72,12 @@ rm -rf $RPM_BUILD_ROOT
 - update associations of existing users to existing projects
 * Thu Aug 16 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.1-1%{?dist}
 - update project's timelines to the most recent
-- lookup firstly by AAI uid 
+- lookup firstly by AAI uid
 - store also AAI uid
 - transliterate map user data to ASCII
 * Thu Jun 7 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.0-3%{?dist}
 - do not replace configs on update
-- backup yaml with h:m:s timestamp 
+- backup yaml with h:m:s timestamp
 * Mon Jun 4 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.0-2%{?dist}
 - added Logger definition in puppet update-userdb
 * Mon Jun 4 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.0-1%{?dist}
