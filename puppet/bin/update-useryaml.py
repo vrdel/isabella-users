@@ -260,6 +260,8 @@ def main():
             for p in projectschanged_db:
                 users = p.users
                 for u in users:
+                    if u.username in skipusers:
+                        continue
                     yaml_user = yusers['isabella_users'][u.username]
                     yaml_project = yaml_user['comment'].split(',')
                     if yaml_project:
