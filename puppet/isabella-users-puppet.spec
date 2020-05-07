@@ -10,7 +10,7 @@
 %endif
 
 Name:           isabella-users-puppet
-Version:        0.1.4
+Version:        0.1.5
 Release:        1%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
@@ -60,6 +60,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Thu May 7 2020 Daniel Vrcic <dvrcic@srce.hr> - 0.1.5-1%{?dist}
+* skip multiple HTC-only services
 * Tue Feb 11 2020 Daniel Vrcic <dvrcic@srce.hr> - 0.1.4-1%{?dist}
 * take into account skipusers for projects changes only
 * Mon Oct 28 2019 Daniel Vrcic <dvrcic@srce.hr> - 0.1.3-3%{?dist}
