@@ -105,7 +105,7 @@ def main():
 
     for project in data:
         # skip projects that have not been accepted yet or are HTC only
-        if int(project['status_id']) > 1 or int(project['htc']) == 2:
+        if int(project['status_id']) > 1 or int(project['htc']) > 1:
             continue
         idproj = project['sifra']
         try:
