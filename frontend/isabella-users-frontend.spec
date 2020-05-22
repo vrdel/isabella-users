@@ -10,7 +10,7 @@
 %endif
 
 Name:           isabella-users-frontend
-Version:        0.1.2
+Version:        0.1.3
 Release:        1%{?mydist}.srce
 Summary:        Scripts for opening user accounts on SRCE Isabella cluster
 Group:          Applications/System
@@ -57,6 +57,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Fri May 22 2020 Daniel Vrcic <dvrcic@srce.hr> - 0.1.3-1%{?dist}
+- updated email template and subject
 * Wed Jul 3 2019 Daniel Vrcic <dvrcic@srce.hr> - 0.1.2-1%{?dist}
 - send utf-8 emails
 - email subject from config
