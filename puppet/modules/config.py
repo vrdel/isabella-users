@@ -14,7 +14,6 @@ def parse_config(logger=None):
                 if section.startswith('external'):
                     confopts['external'] = ({'subscription': config.get(section, 'subscription')})
                     confopts['external'].update({'isabellausersyaml': config.get(section, 'isabellausersyaml')})
-                    confopts['external'].update({'crongiusersyaml': config.get(section, 'crongiusersyaml')})
 
                 if section.startswith('settings'):
                     confopts['settings'] = {'gid': config.getint(section, 'gid')}
