@@ -155,9 +155,7 @@ def main():
     cachedb = conf_opts['settings']['cache']
 
     yusers = load_yaml(conf_opts['external']['isabellausersyaml'], logger)
-    ycrongiusers = load_yaml(conf_opts['external']['crongiusersyaml'], logger)
     yamlusers = avail_users(yusers['isabella_users'])
-    yamlcrongiusers = avail_users(ycrongiusers['crongi_users'])
 
     if args.sql:
         cachedb = args.sql
@@ -175,7 +173,6 @@ def main():
     maxuid = session.query(MaxUID).first()
     usersdb = set(u.username for u in users)
     newusers = usersdb.difference(yamlusers)
-    newincrongi = newusers.intersection(yamlcrongiusers)
     yamlprojects = user_projects_yaml(yusers['isabella_users'], skipusers)
     dbprojects = user_projects_db(yusers['isabella_users'], skipusers, session)
     projects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
@@ -187,27 +184,10 @@ def main():
         print newusers
         print "Changed projects"
         print projects_changed
-        print
-        print "From CRO-NGI"
-        print newincrongi
 
     elif newusers:
         uid = maxuid.uid
         newusersd = dict()
-
-        for u in newincrongi:
-            newusers.remove(u)
-            udb = session.query(User).filter(User.username == u).one()
-            if udb.last_project:
-                comment = '{0} {1}, {2}'.format(udb.name, udb.surname, udb.last_project)
-            else:
-                comment = '{0} {1}'.format(udb.name, udb.surname)
-            newuser = dict(comment=comment,
-                           gid=conf_opts['settings']['gid'],
-                           shell=conf_opts['settings']['shell'],
-                           home='/home/{0}'.format(udb.username),
-                           uid=ycrongiusers['crongi_users'][u]['uid'])
-            newusersd.update({unidecode(udb.username): newuser})
 
         for u in newusers:
             uid += 1
