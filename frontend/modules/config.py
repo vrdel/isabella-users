@@ -4,6 +4,7 @@ import os
 
 conf = '/etc/isabella-users-frontend/frontend.conf'
 
+
 def parse_config(logger=None):
     confopts = dict()
 
@@ -14,8 +15,8 @@ def parse_config(logger=None):
                 if section.startswith('external'):
                     confopts['external'] = ({'subscription': config.get(section, 'subscription')})
                     confopts['external'].update({'projects': config.get(section, 'projects')})
-                    confopts['external'].update({'mailinglist': config.get(section, 'mailinglist')})
-                    confopts['external'].update({'mailinglisttoken': config.get(section, 'mailinglisttoken')})
+                    confopts['external'].update({'mailinglistserver': config.get(section, 'mailinglistserver')})
+                    confopts['external'].update({'mailinglistcredentials': config.get(section, 'mailinglistcredentials')})
                     confopts['external'].update({'mailinglistname': config.get(section, 'mailinglistname')})
                     confopts['external'].update({'emailfrom': config.get(section, 'emailfrom')})
                     confopts['external'].update({'emailsubject': config.get(section, 'emailsubject')})
@@ -27,7 +28,6 @@ def parse_config(logger=None):
                         else:
                             sys.stderr.write('%s does not exist\n' % confopts['external']['emailtemplate'])
                         raise SystemExit(1)
-
 
                 if section.startswith('settings'):
                     confopts['settings'] = {'gid': long(config.get(section, 'gid'))}
