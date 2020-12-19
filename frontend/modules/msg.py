@@ -41,6 +41,12 @@ class InfoAccOpen(object):
 
     def send(self):
         email_text = self._construct_email()
+
+        for part in [self.emailfrom, self.emailto, self.emailsubject]:
+            if not part:
+                self.logger.error('To, From or Subject missing')
+                return False
+
         if not email_text:
             self.logger.error('Could not construct an email')
 
