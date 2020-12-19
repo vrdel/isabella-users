@@ -6,6 +6,7 @@ import datetime
 import smtplib
 import socket
 
+
 class InfoAccOpen(object):
     def __init__(self, username, password, templatepath, smtpserver, emailfrom,
                  emailto, emailsubject, logger):
