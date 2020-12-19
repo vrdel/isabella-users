@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+import __main__
+__main__.__requires__ = __requires__ = []
+__requires__.append('SQLAlchemy >= 0.8.2')
+import pkg_resources
+pkg_resources.require(__requires__)
+
 import argparse
 
 from isabella_users_frontend.cachedb import User
@@ -82,12 +88,12 @@ def concat(s):
 def gen_password():
     s = os.urandom(64)
 
-    return b64encode(s)[:30].decode()
+    return b64encode(s)[:30]
 
 
 def create_shareddir(dir, uid, gid, logger):
     try:
-        os.mkdir(dir, 0o750)
+        os.mkdir(dir, 0750)
         os.chown(dir, uid, gid)
 
         return True
@@ -100,7 +106,7 @@ def create_shareddir(dir, uid, gid, logger):
 
 def create_homedir(dir, uid, gid, logger):
     try:
-        os.mkdir(dir, 0o750)
+        os.mkdir(dir, 0750)
         os.chown(dir, uid, gid)
 
         for root, dirs, files in os.walk(conf_opts['settings']['skeletonpath']):
