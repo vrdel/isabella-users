@@ -34,28 +34,34 @@ connection_timeout = 120
 conf_opts = parse_config()
 
 
-def subscribe_maillist(credentials, name, email, username, logger):
+def subscribe_maillist(server, credentials, name, email, username, logger):
     try:
         headers = dict()
 
         headers = requests.utils.default_headers()
         headers['Content-Type'] = 'application/x-www-form-urlencoded'
         auth = tuple(credentials.split(':'))
-        response = requests.get('http://list.srce.hr:8001/3.0/lists/{}'.format(name), auth=auth, headers=headers)
+        response = requests.get('{}/lists/{}'.format(server, name), auth=auth, headers=headers)
         list_id = json.loads(response.content)['list_id']
         subscribe_payload = dict(list_id=list_id, subscriber=email,
                                  pre_verified=True, pre_confirmed=True)
         data = urlencode(subscribe_payload, doseq=True)
 
-        response = requests.post('http://list.srce.hr:8001/3.0/members',
+        response = requests.post('{}/members'.format(server),
                                  headers=headers, auth=auth, data=data, timeout=connection_timeout)
         response.raise_for_status()
 
         return True
 
     except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
+        excp_msg = getattr(e.response, 'content', False)
+        if excp_msg:
+            errormsg = ('{} {}').format(str(e), excp_msg)
+        else:
+            errormsg = ('{}').format(str(e))
+
         logger.error('Failed subscribing user %s on %s: %s' % (username, name,
-                                                               str(e)))
+                                                               errormsg))
         return False
 
 
@@ -241,7 +247,8 @@ def main():
     for u in not_subscribed:
         credentials = conf_opts['external']['mailinglistcredentials']
         listname = conf_opts['external']['mailinglistname']
-        r = subscribe_maillist(credentials, listname, u.email, u.username, logger)
+        listserver = conf_opts['external']['mailinglistserver']
+        r = subscribe_maillist(listserver, credentials, listname, u.email, u.username, logger)
         if r:
             u.issubscribe = True
             logger.info('User %s subscribed to %s' % (u.username, listname))
