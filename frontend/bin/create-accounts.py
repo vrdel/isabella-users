@@ -1,11 +1,5 @@
 #!/usr/bin/python
 
-import __main__
-__main__.__requires__ = __requires__ = []
-__requires__.append('SQLAlchemy >= 0.8.2')
-import pkg_resources
-pkg_resources.require(__requires__)
-
 import argparse
 
 from isabella_users_frontend.cachedb import User
@@ -21,27 +15,34 @@ from base64 import b64encode
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from urllib import urlencode
+
 import sys
 import requests
 import os
 import shutil
 import subprocess
+import json
 
 connection_timeout = 120
 conf_opts = parse_config()
 
 
-def subscribe_maillist(token, name, email, username, logger):
+def subscribe_maillist(credentials, name, email, username, logger):
     try:
-        headers, payload = dict(), dict()
+        headers = dict()
 
         headers = requests.utils.default_headers()
-        headers.update({'content-type': 'application/x-www-form-urlencoded'})
-        headers.update({'x-auth-token': token})
-        payload = "list={0}&email={1}".format(name, email)
+        headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        auth = tuple(credentials.split(':'))
+        response = requests.get('http://list.srce.hr:8001/3.0/lists/{}'.format(name), auth=auth, headers=headers)
+        list_id = json.loads(response.content)['list_id']
+        subscribe_payload = dict(list_id=list_id, subscriber=email,
+                                 pre_verified=True, pre_confirmed=True)
+        data = urlencode(subscribe_payload, doseq=True)
 
-        response = requests.post(conf_opts['external']['mailinglist'],
-                                 headers=headers, data=payload, timeout=connection_timeout)
+        response = requests.post('http://list.srce.hr:8001/3.0/members',
+                                 headers=headers, auth=auth, data=data, timeout=connection_timeout)
         response.raise_for_status()
 
         return True
@@ -81,12 +82,12 @@ def concat(s):
 def gen_password():
     s = os.urandom(64)
 
-    return b64encode(s)[:30]
+    return b64encode(s)[:30].decode()
 
 
 def create_shareddir(dir, uid, gid, logger):
     try:
-        os.mkdir(dir, 0750)
+        os.mkdir(dir, 0o750)
         os.chown(dir, uid, gid)
 
         return True
@@ -99,7 +100,7 @@ def create_shareddir(dir, uid, gid, logger):
 
 def create_homedir(dir, uid, gid, logger):
     try:
-        os.mkdir(dir, 0750)
+        os.mkdir(dir, 0o750)
         os.chown(dir, uid, gid)
 
         for root, dirs, files in os.walk(conf_opts['settings']['skeletonpath']):
@@ -232,9 +233,9 @@ def main():
     # subscribe opened user account to mailing list
     not_subscribed = session.query(User).filter(User.issubscribe == False).all()
     for u in not_subscribed:
-        token = conf_opts['external']['mailinglisttoken']
+        credentials = conf_opts['external']['mailinglistcredentials']
         listname = conf_opts['external']['mailinglistname']
-        r = subscribe_maillist(token, listname, u.email, u.username, logger)
+        r = subscribe_maillist(credentials, listname, u.email, u.username, logger)
         if r:
             u.issubscribe = True
             logger.info('User %s subscribed to %s' % (u.username, listname))
