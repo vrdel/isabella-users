@@ -1,15 +1,17 @@
 from distutils.core import setup
 import glob
 
-NAME='isabella-users-frontend'
+
+NAME = 'isabella-users-frontend'
+
 
 def get_ver():
     try:
-        for line in open(NAME+'.spec'):
+        for line in open(NAME + '.spec'):
             if "Version:" in line:
                 return line.split()[1]
     except IOError:
-        print "Make sure that %s is in directory"  % (NAME+'.spec')
+        print("Make sure that %s is in directory" % (NAME + '.spec'))
         raise SystemExit(1)
 
 
