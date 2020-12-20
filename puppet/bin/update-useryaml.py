@@ -9,7 +9,7 @@ from isabella_users_puppet.config import parse_config
 from sqlalchemy import create_engine
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
-from unidecode import unidecode
+from text_unidecode import unidecode
 
 import sys
 import datetime
@@ -78,7 +78,7 @@ def is_date(date):
         return datetime.date(*t)
 
     except ValueError:
-        print 'Date not in %Y-%m-%d format'
+        print('Date not in %Y-%m-%d format')
 
         raise SystemExit(1)
 
@@ -172,12 +172,11 @@ def main():
     projects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
 
     if args.nop:
-        print "Accounts to be opened:"
-        print
-        print "Diff DB - YAML"
-        print newusers
-        print "Changed projects"
-        print projects_changed
+        print("Accounts to be opened:")
+        print("Diff DB - YAML")
+        print(newusers)
+        print("Changed projects")
+        print(projects_changed)
 
     elif newusers:
         uid = maxuid.uid
