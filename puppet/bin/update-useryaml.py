@@ -85,8 +85,8 @@ def is_date(date):
 
 def load_yaml(path, logger):
     try:
-        stream = file(path, 'r')
-        return yaml.load(stream)
+        with open(path, 'r') as stream:
+            return yaml.load(stream)
 
     except yaml.YAMLError as e:
         logger.error(e)
@@ -115,8 +115,8 @@ def backup_yaml(path, logger):
 
 def write_yaml(path, data, logger):
     try:
-        stream = file(path, 'w')
-        yaml.dump(data, stream, default_flow_style=False)
+        with open(path, 'w') as stream:
+            yaml.dump(data, stream, default_flow_style=False)
         return True
 
     except yaml.YAMLError as e:
