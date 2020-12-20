@@ -1,12 +1,6 @@
 #!/usr/bin/python3
 
-import __main__
-__main__.__requires__ = __requires__ = []
-__requires__.append('SQLAlchemy >= 0.8.2')
-import pkg_resources
-pkg_resources.require(__requires__)
-
-from isabella_users_puppet.cachedb import Base, User, Projects
+from isabella_users_puppet.cachedb import User, Projects
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm.exc import NoResultFound
@@ -30,7 +24,7 @@ def is_date(date):
         return datetime.date(*t)
 
     except ValueError:
-        print 'Date not in %Y-%m-%d format'
+        print('Date not in %Y-%m-%d format')
 
         raise SystemExit(1)
 

@@ -1,11 +1,5 @@
 #!/usr/bin/python3
 
-import __main__
-__main__.__requires__ = __requires__ = []
-__requires__.append('SQLAlchemy >= 0.8.2')
-import pkg_resources
-pkg_resources.require(__requires__)
-
 import argparse
 
 from isabella_users_puppet.cachedb import User, MaxUID, Projects
