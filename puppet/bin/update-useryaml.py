@@ -29,7 +29,7 @@ def avail_users(stream):
 def user_projects_db(yamlusers, skipusers, session):
     projects = list()
 
-    for (key, value) in yamlusers.iteritems():
+    for (key, value) in yamlusers.items():
         if key in skipusers:
             continue
 
@@ -42,7 +42,7 @@ def user_projects_db(yamlusers, skipusers, session):
 def user_projects_yaml(yamlusers, skipusers):
     projects = list()
 
-    for (key, value) in yamlusers.iteritems():
+    for (key, value) in yamlusers.items():
         if key in skipusers:
             continue
 
@@ -197,7 +197,7 @@ def main():
             newusersd.update({unidecode(udb.username): newuser})
 
         allusers = merge_users(yusers['isabella_users'], newusersd)
-        for u, d in allusers.iteritems():
+        for u, d in allusers.items():
             if u in skipusers:
                 continue
 
