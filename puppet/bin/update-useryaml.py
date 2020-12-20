@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import __main__
 __main__.__requires__ = __requires__ = []
