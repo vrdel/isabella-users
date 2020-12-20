@@ -19,11 +19,10 @@ URL:            https://github.com/vrdel/isabella-users
 Source0:        %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
-BuildRequires:  python2-devel
-Requires:       python-unidecode
-Requires:       python-argparse
-Requires:       python-sqlalchemy
-Requires:       python-requests
+BuildRequires:  python3-devel
+Requires:       python3-unidecode
+Requires:       python36-sqlalchemy
+Requires:       python3-requests
 Requires:       PyYAML
 
 
@@ -34,11 +33,11 @@ Scripts for updating Puppet yaml with user accounts
 %setup -q
 
 %build
-%{__python} setup.py build
+%{py3_build}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%{__python} setup.py install --skip-build --root $RPM_BUILD_ROOT --record=INSTALLED_FILES
+%{py3_install "--record=INSTALLED_FILES"}
 install --directory --mode 755 $RPM_BUILD_ROOT/%{_localstatedir}/log/%{name}/
 install --directory --mode 755 $RPM_BUILD_ROOT/%{_sharedstatedir}/%{name}/
 install --directory --mode 755 $RPM_BUILD_ROOT/%{_sharedstatedir}/%{name}/backup
@@ -51,12 +50,11 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{_sysconfdir}/%{name}/
 %config(noreplace) %attr(600,root,root) %{_sysconfdir}/%{name}/puppet.conf
 %config(noreplace) %attr(600,root,root) %{_sysconfdir}/%{name}/users.json
-%dir %{python_sitelib}/%{underscore %{name}}/
-%{python_sitelib}/%{underscore %{name}}/*.py[co]
+%dir %{python3_sitelib}/%{underscore %{name}}/
+%{python3_sitelib}/%{underscore %{name}}/*.py[co]
 %dir %{_localstatedir}/log/%{name}/
 %dir %{_sharedstatedir}/%{name}/
-%dir %{_sharedstatedir}/%{name}/backup
-%attr(0755,root,root) %dir %{_libexecdir}/%{name}
+
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
