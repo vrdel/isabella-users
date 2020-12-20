@@ -10,7 +10,7 @@
 %endif
 
 Name:           isabella-users-puppet
-Version:        0.1.6
+Version:        0.1.7
 Release:        1%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
@@ -58,6 +58,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Sun Dec 20 2020 Daniel Vrcic <dvrcic@srce.hr> - 0.1.7-1%{?dist}
+- bump to Centos 8 and Python 3
 * Fri May 22 2020 Daniel Vrcic <dvrcic@srce.hr> - 0.1.6-1%{?dist}
 - remove handling of CRO-NGI users
 * Thu May 7 2020 Daniel Vrcic <dvrcic@srce.hr> - 0.1.5-1%{?dist}
