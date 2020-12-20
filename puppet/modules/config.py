@@ -1,14 +1,15 @@
-import ConfigParser
+import configparser
 import sys
 import os
 
 conf = '/etc/isabella-users-puppet/puppet.conf'
 
+
 def parse_config(logger=None):
     confopts = dict()
 
     try:
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         if config.read(conf):
             for section in config.sections():
                 if section.startswith('external'):
@@ -33,14 +34,14 @@ def parse_config(logger=None):
                 sys.stderr.write('Missing %s\n' % conf)
             raise SystemExit(1)
 
-    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError) as e:
+    except (configparser.NoOptionError, configparser.NoSectionError) as e:
         if logger:
             logger.error(e)
         else:
             sys.stderr.write('%s\n' % e)
         raise SystemExit(1)
 
-    except (ConfigParser.MissingSectionHeaderError, ConfigParser.ParsingError, SystemExit) as e:
+    except (configparser.MissingSectionHeaderError, configparser.ParsingError, SystemExit) as e:
         if getattr(e, 'filename', False):
             if logger:
                 logger.error(e.filename + ' is not a valid configuration file')
