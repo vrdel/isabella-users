@@ -1,17 +1,11 @@
 #!/usr/bin/python3
 
-import __main__
-__main__.__requires__ = __requires__ = []
-__requires__.append('SQLAlchemy >= 0.8.2')
-import pkg_resources
-pkg_resources.require(__requires__)
-
 from sqlalchemy import create_engine, and_
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 
 from datetime import datetime
-from unidecode import unidecode
+from text_unidecode import unidecode
 
 from isabella_users_puppet.cachedb import Base, User, Projects
 from isabella_users_puppet.config import parse_config
