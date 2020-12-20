@@ -20,10 +20,10 @@ Source0:        %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
 BuildRequires:  python3-devel
-Requires:       python3-unidecode
-Requires:       python36-sqlalchemy
+Requires:       python3-text-unidecode
+Requires:       python3-sqlalchemy
 Requires:       python3-requests
-Requires:       PyYAML
+Requires:       python3-pyyaml
 
 
 %description
