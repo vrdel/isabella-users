@@ -49,6 +49,7 @@ def main():
     args = parser.parse_args()
 
     cachedb = conf_opts['settings']['cache']
+    gracedays = datetime.timedelta(conf_opts['settings']['gracedays'])
 
     if args.sql:
         cachedb = args.sql
@@ -67,7 +68,7 @@ def main():
     logger.info("Update projects and users expired on %s" % date)
 
     for p in session.query(Projects):
-        if p.date_to < date:
+        if p.date_to + gracedays < date:
             p.status = 0
         else:
             p.status = 1

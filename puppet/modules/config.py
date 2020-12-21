@@ -20,6 +20,7 @@ def parse_config(logger=None):
                     confopts['settings'] = {'gid': config.getint(section, 'gid')}
                     confopts['settings'].update({'shell': config.get(section, 'shell')})
                     confopts['settings'].update({'disableuser': config.getboolean(section, 'disableuser')})
+                    confopts['settings'].update({'gracedays': config.getint(section, 'gracedays')})
                     confopts['settings'].update({'excludeuser': config.get(section, 'excludeuser')})
                     confopts['settings'].update({'cache': config.get(section, 'cache')})
                     confopts['settings'].update({'mapuser': config.get(section, 'mapuser')})
