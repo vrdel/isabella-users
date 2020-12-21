@@ -49,7 +49,7 @@ def main():
     args = parser.parse_args()
 
     cachedb = conf_opts['settings']['cache']
-    gracedays = datetime.timedelta(conf_opts['settings']['gracedays'])
+    gracedays = datetime.timedelta(days=conf_opts['settings']['gracedays'])
 
     if args.sql:
         cachedb = args.sql
