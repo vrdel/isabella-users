@@ -51,9 +51,9 @@ def gen_username(name, surname, existusers):
     elif username in existusers:
         match = list()
         if len(username) < 8:
-            match = filter(lambda u: u.startswith(username), existusers)
+            match = list(filter(lambda u: u.startswith(username), existusers))
         else:
-            match = filter(lambda u: u.startswith(username[:-1]), existusers)
+            match = list(filter(lambda u: u.startswith(username[:-1]), existusers))
 
         return username + str(len(match))
 
