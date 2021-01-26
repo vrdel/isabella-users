@@ -3,14 +3,10 @@
 %define underscore() %(echo %1 | sed 's/-/_/g')
 %define stripc() %(echo %1 | sed 's/el7.centos/el7/')
 
-%if 0%{?el7:1}
-%define mydist %{stripc %{dist}}
-%else
 %define mydist %{dist}
-%endif
 
 Name:           isabella-users-puppet
-Version:        0.1.7
+Version:        0.1.8
 Release:        1%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
@@ -58,8 +54,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Tue Jan 26 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.8-1%{?dist}
+- bugfix with explicit cast to list of iterable due py3 bump
 * Sun Dec 20 2020 Daniel Vrcic <dvrcic@srce.hr> - 0.1.7-1%{?dist}
 - bump to Centos 8 and Python 3
+- added grace period feature
 * Fri May 22 2020 Daniel Vrcic <dvrcic@srce.hr> - 0.1.6-1%{?dist}
 - remove handling of CRO-NGI users
 * Thu May 7 2020 Daniel Vrcic <dvrcic@srce.hr> - 0.1.5-1%{?dist}
