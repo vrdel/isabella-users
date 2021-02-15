@@ -34,7 +34,8 @@ def user_projects_db(yamlusers, skipusers, session):
             continue
 
         user_db = session.query(User).filter(User.username == key).one()
-        projects.append(user_db.last_project)
+        all_projects = [project.idproj for project in user_db.projects]
+        projects.append(' '.join(all_projects).strip())
 
     return projects
 
@@ -57,15 +58,25 @@ def user_projects_yaml(yamlusers, skipusers):
 
 def user_projects_changed(yaml, db, logger):
     changed = list()
+    diff = set()
 
     if len(yaml) == len(db):
         for (i, p) in enumerate(db):
             if p != yaml[i]:
-                changed.append(p)
+                py = yaml[i].split()
+                pd = p.split()
+                spy = set(py)
+                spd = set(pd)
+                if len(py) > len(pd):
+                    diff.update(spy.difference(spd))
+                else:
+                    diff.update(spd.difference(spy))
     else:
         logger.error('DB and YAML out of sync')
 
         raise SystemExit(1)
+
+    changed = [project for project in diff]
 
     return changed
 
@@ -170,6 +181,7 @@ def main():
     yamlprojects = user_projects_yaml(yusers['isabella_users'], skipusers)
     dbprojects = user_projects_db(yusers['isabella_users'], skipusers, session)
     projects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
+    import ipdb; ipdb.set_trace()
 
     if args.nop:
         print("Accounts to be opened:")
@@ -236,7 +248,7 @@ def main():
         try:
             changed_users = list()
 
-            projectschanged_db = session.query(Projects).filter(Projects.idproj.in_(projects_changed)).all()
+            projectschanged_db = session.query(Projects).filter(Projects.idproj.in_(projects_changed.split())).all()
             for p in projectschanged_db:
                 users = p.users
                 for u in users:
