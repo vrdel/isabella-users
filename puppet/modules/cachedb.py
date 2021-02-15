@@ -1,6 +1,8 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Table, Column, Integer, String, Unicode, MetaData, ForeignKey, Date, select
+from sqlalchemy import Table, Column, Integer, String, Unicode, MetaData, ForeignKey, Date, DateTime, select
 from sqlalchemy.orm import relationship, backref
+
+import datetime
 
 Base = declarative_base()
 
@@ -11,7 +13,7 @@ class Assign(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(ForeignKey('users.id'))
     project_id = Column(ForeignKey('projects.id'))
-
+    when = Column(DateTime, default=datetime.datetime.now)
 
 class User(Base):
     __tablename__ = 'users'
