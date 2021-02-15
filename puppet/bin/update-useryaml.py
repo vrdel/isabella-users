@@ -181,7 +181,6 @@ def main():
     yamlprojects = user_projects_yaml(yusers['isabella_users'], skipusers)
     dbprojects = user_projects_db(yusers['isabella_users'], skipusers, session)
     projects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
-    import ipdb; ipdb.set_trace()
 
     if args.nop:
         print("Accounts to be opened:")
@@ -248,19 +247,20 @@ def main():
         try:
             changed_users = list()
 
-            projectschanged_db = session.query(Projects).filter(Projects.idproj.in_(projects_changed.split())).all()
+            projectschanged_db = session.query(Projects).filter(Projects.idproj.in_(projects_changed)).all()
             for p in projectschanged_db:
                 users = p.users
                 for u in users:
                     if u.username in skipusers:
                         continue
                     yaml_user = yusers['isabella_users'][u.username]
-                    yaml_project = yaml_user['comment'].split(',')
-                    if yaml_project:
-                        yaml_project = yaml_project[1][1:]
-                    if yaml_project != u.last_project:
-                        changed_users.append((u.username, u.last_project))
-                        yaml_user['comment'] = '{0} {1}, {2}'.format(u.name, u.surname, u.last_project)
+                    yaml_projects = yaml_user['comment'].split(',')[1].strip()
+                    all_projects = [project.idproj for project in u.projects]
+                    str_all_projects = ' '.join(all_projects)
+                    if yaml_projects != str_all_projects:
+                        diff_project = user_projects_changed([yaml_projects], [str_all_projects], logger)
+                        changed_users.append((u.username, ' '.join(diff_project)))
+                        yaml_user['comment'] = '{0} {1}, {2}, {3}'.format(u.name, u.surname, str_all_projects, u.last_project)
 
         except NoResultFound as e:
             logger.error('{1} {0}'.format(u, str(e)))
