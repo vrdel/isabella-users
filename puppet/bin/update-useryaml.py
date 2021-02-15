@@ -48,7 +48,7 @@ def user_projects_yaml(yamlusers, skipusers):
 
         project = value['comment'].split(',')
         if len(project) > 1:
-            projects.append(project[1][1:])
+            projects.append(project[1].strip())
         else:
             projects.append('')
 
@@ -186,7 +186,10 @@ def main():
             uid += 1
             udb = session.query(User).filter(User.username == u).one()
             if udb.last_project:
-                comment = '{0} {1}, {2}'.format(udb.name, udb.surname, udb.last_project)
+                all_projects = [project.idproj for project in udb.projects]
+                comment = '{0} {1}, {2}, {3}'.format(udb.name, udb.surname,
+                                                     ' '.join(all_projects),
+                                                     udb.last_project)
             else:
                 comment = '{0} {1}'.format(udb.name, udb.surname)
             newuser = dict(comment='%s' % comment,
@@ -209,7 +212,11 @@ def main():
                     elif udb.status == 1:
                         d['shell'] = conf_opts['settings']['shell']
                 if udb.last_project:
-                    d['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname, udb.last_project)
+                    all_projects = [project.idproj for project in udb.projects]
+                    d['comment'] = '{0} {1}, {2}, {3}'.format(udb.name,
+                                                              udb.surname,
+                                                              ' '.join(all_projects),
+                                                              udb.last_project)
                 else:
                     d['comment'] = '{0} {1}'.format(udb.name, udb.surname)
 

@@ -1,5 +1,6 @@
 import libuser
 
+
 class UserUtils(object):
     def __init__(self, logger, home_prefix='/home'):
         self.logger = logger
