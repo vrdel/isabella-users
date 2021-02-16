@@ -15,6 +15,7 @@ class Assign(Base):
     project_id = Column(ForeignKey('projects.id'))
     when = Column(DateTime, default=datetime.datetime.now)
 
+
 class User(Base):
     __tablename__ = 'users'
 

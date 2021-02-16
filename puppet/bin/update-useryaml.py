@@ -190,6 +190,10 @@ def main():
         print("Changed projects")
         print(projects_changed)
 
+    # trigger is new users that exist in the cache db, but are not
+    # presented in yaml. since we're merging new users to existing ones
+    # and going all over them for the full yaml dump, we'll also report
+    # if some new project assignments happened and for whom.
     elif newusers:
         uid = maxuid.uid
         newusersd = dict()
@@ -252,6 +256,9 @@ def main():
                 logger.info("Changed projects for %d users: %s" %
                             (len(changed_users), ', '.join(changed_users)))
 
+    # trigger here is only new project assingments. so new users, same set of
+    # them in db and yaml, just the associations between projects and users
+    # changed.
     elif projects_changed:
         try:
             changed_users = list()

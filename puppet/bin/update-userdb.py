@@ -67,12 +67,17 @@ def main():
 
     logger.info("Update projects and users expired on %s" % date)
 
+    # is project expired or not. allow some graceperiod and treat it as active
+    # in such.
     for p in session.query(Projects):
         if p.date_to + gracedays < date:
             p.status = 0
         else:
             p.status = 1
 
+    # conclude if user is active or not. user is active only if he's assigned
+    # to at least one active project (set previously). also set users'
+    # last_project field with the ID of the most recent project.
     for u in session.query(User):
         proj_statuses = [p.status for p in u.projects]
         if all_false(proj_statuses):
