@@ -108,9 +108,12 @@ def main():
             # project is prolong
             p.date_from = datetime.strptime(project['date_from'], '%Y-%m-%d')
             p.date_to = datetime.strptime(project['date_to'], '%Y-%m-%d')
+            p.name = project['name']
+            p.institution = project['ustanova']
         except NoResultFound:
             p = Projects(feedid=project['id'], idproj=idproj,
-                         respname='', respemail='', institution='', name='',
+                         respname='', respemail='',
+                         institution=project['ustanova'], name=project['name'],
                          date_from=datetime.strptime(project['date_from'], '%Y-%m-%d'),
                          date_to=datetime.strptime(project['date_to'], '%Y-%m-%d'),
                          date_created=datetime.now(),
