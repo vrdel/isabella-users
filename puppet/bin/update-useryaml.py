@@ -34,7 +34,7 @@ def user_projects_db(yamlusers, skipusers, session):
             continue
 
         user_db = session.query(User).filter(User.username == key).one()
-        all_projects = [project.idproj for project in user_db.projects]
+        all_projects = [project.idproj for project in user_db.projects_assign]
         projects.append(' '.join(all_projects).strip())
 
     return projects
@@ -203,7 +203,7 @@ def main():
             uid += 1
             udb = session.query(User).filter(User.username == u).one()
             if udb.last_project:
-                all_projects = [project.idproj for project in udb.projects]
+                all_projects = [project.idproj for project in udb.projects_assign]
                 comment = '{0} {1}, {2}, {3}'.format(udb.name, udb.surname,
                                                      ' '.join(all_projects),
                                                      udb.last_project)
@@ -229,7 +229,7 @@ def main():
                     elif udb.status == 1:
                         d['shell'] = conf_opts['settings']['shell']
                 if udb.last_project:
-                    all_projects = [project.idproj for project in udb.projects]
+                    all_projects = [project.idproj for project in udb.projects_assign]
                     prev_projects =  d['comment'].split(',')[1].strip()
                     if prev_projects != ' '.join(all_projects):
                         changed_users.append(udb.username)

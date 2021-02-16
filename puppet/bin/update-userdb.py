@@ -69,20 +69,22 @@ def main():
 
     # is project expired or not. allow some graceperiod and treat it as active
     # in such.
-    for p in session.query(Projects):
-        if p.date_to + gracedays < date:
-            p.status = 0
+    for project in session.query(Projects):
+        if project.date_to + gracedays < date:
+            project.status = 0
         else:
-            p.status = 1
+            project.status = 1
 
     # conclude if user is active or not. user is active only if he's assigned
     # to at least one active project (set previously).
-    for u in session.query(User):
-        proj_statuses = [p.status for p in u.projects]
+    for user in session.query(User):
+        proj_statuses = [project.status for project in user.projects_assign]
         if all_false(proj_statuses):
-            u.status = 0
+            user.status = 0
         else:
-            u.status = 1
+            user.status = 1
+        all_projects = [project.idproj for project in user.projects_assign]
+        user.projects = ' '.join(all_projects)
 
     session.commit()
 

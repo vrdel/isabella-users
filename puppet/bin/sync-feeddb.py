@@ -163,14 +163,14 @@ def main():
                                      feeduid=feeduid, mail=feedemail,
                                      date_join=datetime.now(),
                                      status=int(user['status_id']),
-                                     last_project='')
+                                     projects='')
                     else:
                         u.mail = feedemail
                 except NoResultFound:
                     u = User(feedid=user['id'], username=gen_username(feedname, feedsurname, allusernames),
                              name=feedname, surname=feedsurname, feeduid=feeduid, mail=feedemail,
                              date_join=datetime.now(),
-                             status=int(user['status_id']), last_project='')
+                             status=int(user['status_id']), projects='')
             if u_dup:
                 p.users.extend([u, u_dup])
             else:
