@@ -178,6 +178,7 @@ def main():
     maxuid = session.query(MaxUID).first()
     usersdb = set(u.username for u in users)
     newusers = usersdb.difference(yamlusers)
+
     yamlprojects = user_projects_yaml(yusers['isabella_users'], skipusers)
     dbprojects = user_projects_db(yusers['isabella_users'], skipusers, session)
     projects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
@@ -192,6 +193,7 @@ def main():
     elif newusers:
         uid = maxuid.uid
         newusersd = dict()
+        changed_users = list()
 
         for u in newusers:
             uid += 1
@@ -224,12 +226,16 @@ def main():
                         d['shell'] = conf_opts['settings']['shell']
                 if udb.last_project:
                     all_projects = [project.idproj for project in udb.projects]
+                    prev_projects =  d['comment'].split(',')[1].strip()
+                    if prev_projects != ' '.join(all_projects):
+                        changed_users.append(udb.username)
                     d['comment'] = '{0} {1}, {2}, {3}'.format(udb.name,
                                                               udb.surname,
                                                               ' '.join(all_projects),
                                                               udb.last_project)
                 else:
                     d['comment'] = '{0} {1}'.format(udb.name, udb.surname)
+
 
             except NoResultFound as e:
                 logger.error('{1} {0}'.format(u, str(e)))
@@ -242,6 +248,9 @@ def main():
             f = session.query(MaxUID).first()
             f.uid = uid
             session.commit()
+            if changed_users:
+                logger.info("Changed projects for %d users: %s" %
+                            (len(changed_users), ', '.join(changed_users)))
 
     elif projects_changed:
         try:
@@ -273,7 +282,7 @@ def main():
                         ', '.join(['{0} assigned to {1}'.format(t[0], t[1]) for t in changed_users]))
 
     else:
-        logger.info("No actions needed")
+        logger.info("No changes in projects and users")
 
 
 if __name__ == '__main__':
