@@ -172,11 +172,11 @@ def main():
     session = Session()
 
     skipusers = conf_opts['settings']['excludeuser']
-    skipusers = set([u.strip() for u in skipusers.split(',')])
+    skipusers = set([user.strip() for user in skipusers.split(',')])
 
     users = session.query(User).all()
     maxuid = session.query(MaxUID).first()
-    usersdb = set(u.username for u in users)
+    usersdb = set(user.username for user in users)
     newusers = usersdb.difference(yamlusers)
 
     yamlprojects = user_projects_yaml(yusers['isabella_users'], skipusers)
@@ -199,16 +199,10 @@ def main():
         newusersd = dict()
         changed_users = list()
 
-        for u in newusers:
+        for user in newusers:
             uid += 1
-            udb = session.query(User).filter(User.username == u).one()
-            if udb.last_project:
-                all_projects = [project.idproj for project in udb.projects_assign]
-                comment = '{0} {1}, {2}, {3}'.format(udb.name, udb.surname,
-                                                     ' '.join(all_projects),
-                                                     udb.last_project)
-            else:
-                comment = '{0} {1}'.format(udb.name, udb.surname)
+            udb = session.query(User).filter(User.username == user).one()
+            comment = '{0} {1}, {2}'.format(udb.name, udb.surname, udb.projects)
             newuser = dict(comment='%s' % comment,
                            gid=conf_opts['settings']['gid'],
                            shell=conf_opts['settings']['shell'],
@@ -217,32 +211,27 @@ def main():
             newusersd.update({unidecode(udb.username): newuser})
 
         allusers = merge_users(yusers['isabella_users'], newusersd)
-        for u, d in allusers.items():
-            if u in skipusers:
+        for user, d in allusers.items():
+            if user in skipusers:
                 continue
 
             try:
-                udb = session.query(User).filter(User.username == u).one()
+                udb = session.query(User).filter(User.username == user).one()
                 if conf_opts['settings']['disableuser']:
                     if udb.status == 0:
                         d['shell'] = '/sbin/nologin'
                     elif udb.status == 1:
                         d['shell'] = conf_opts['settings']['shell']
-                if udb.last_project:
-                    all_projects = [project.idproj for project in udb.projects_assign]
-                    prev_projects =  d['comment'].split(',')[1].strip()
-                    if prev_projects != ' '.join(all_projects):
-                        changed_users.append(udb.username)
-                    d['comment'] = '{0} {1}, {2}, {3}'.format(udb.name,
-                                                              udb.surname,
-                                                              ' '.join(all_projects),
-                                                              udb.last_project)
-                else:
-                    d['comment'] = '{0} {1}'.format(udb.name, udb.surname)
+                all_projects = [project.idproj for project in udb.projects_assign]
+                prev_projects =  d['comment'].split(',')[1].strip()
+                if prev_projects != ' '.join(all_projects):
+                    changed_users.append(udb.username)
+                d['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname,
+                                                     udb.projects)
 
 
             except NoResultFound as e:
-                logger.error('{1} {0}'.format(u, str(e)))
+                logger.error('{1} {0}'.format(user, str(e)))
                 continue
 
         backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
@@ -264,22 +253,20 @@ def main():
             changed_users = list()
 
             projectschanged_db = session.query(Projects).filter(Projects.idproj.in_(projects_changed)).all()
-            for p in projectschanged_db:
-                users = p.users
-                for u in users:
-                    if u.username in skipusers:
+            for project in projectschanged_db:
+                users = project.users
+                for user in users:
+                    if user.username in skipusers:
                         continue
-                    yaml_user = yusers['isabella_users'][u.username]
+                    yaml_user = yusers['isabella_users'][user.username]
                     yaml_projects = yaml_user['comment'].split(',')[1].strip()
-                    all_projects = [project.idproj for project in u.projects]
-                    str_all_projects = ' '.join(all_projects)
-                    if yaml_projects != str_all_projects:
-                        diff_project = user_projects_changed([yaml_projects], [str_all_projects], logger)
-                        changed_users.append((u.username, ' '.join(diff_project)))
-                        yaml_user['comment'] = '{0} {1}, {2}, {3}'.format(u.name, u.surname, str_all_projects, u.last_project)
+                    if yaml_projects != user.projects:
+                        diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
+                        changed_users.append((user.username, ' '.join(diff_project)))
+                        yaml_user['comment'] = '{0} {1}, {2}'.format(user.name, user.surname, user.projects)
 
         except NoResultFound as e:
-            logger.error('{1} {0}'.format(u, str(e)))
+            logger.error('{1} {0}'.format(user, str(e)))
             pass
 
         backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
