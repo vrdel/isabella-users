@@ -76,19 +76,13 @@ def main():
             p.status = 1
 
     # conclude if user is active or not. user is active only if he's assigned
-    # to at least one active project (set previously). also set users'
-    # last_project field with the ID of the most recent project.
+    # to at least one active project (set previously).
     for u in session.query(User):
         proj_statuses = [p.status for p in u.projects]
         if all_false(proj_statuses):
             u.status = 0
         else:
             u.status = 1
-        proj_datecreate = [(p.id, p.date_created) for p in u.projects if p.status == 1]
-        if proj_datecreate:
-            last = max(proj_datecreate)
-            plast = session.query(Projects).filter(Projects.id == last[0]).one()
-            u.last_project = plast.idproj
 
     session.commit()
 
