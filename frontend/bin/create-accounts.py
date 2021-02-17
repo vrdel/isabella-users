@@ -128,14 +128,50 @@ def create_homedir(dir, uid, gid, logger):
         return False
 
 
-def extract_email(projects, name, surname, last_project):
-    for p in projects:
-        if last_project == p['sifra']:
-            users = p['users']
-            for u in users:
-                if (name == concat(unidecode(u['ime'])) and
-                    surname == concat(unidecode(u['prezime']))):
-                    return u['mail']
+def extract_email(projects, name, surname, last_project, logger):
+    email = None
+
+    # last_projects is multi project field now. pick last one, but any will
+    # actually play as we're just grabbing email from the API feed.
+    projects = last_project.split()
+    if projects:
+        last_project = projects[len(projects) - 1]
+
+        for p in projects:
+            if last_project == p['sifra']:
+                users = p['users']
+                for u in users:
+                    if (name == concat(unidecode(u['ime'])) and
+                        surname == concat(unidecode(u['prezime']))):
+                        email = u['mail']
+        if email:
+            return email
+        else:
+            logger.error('Failed grabbing an email for %s %s from the API' % (name, surname))
+    else:
+        logger.error('Failed grabbing an email for %s %s from the API as project is unknown' % (name, surname))
+        return None
+
+
+def diff_projects(old, new):
+    projects_old = set(old.split())
+    projects_new = set(new.split())
+    if projects_new:
+        diff = dict(add='', rem='', last=new.split()[len(projects_new) - 1])
+    else:
+        diff = dict(add='', rem='', last='')
+
+    if len(projects_new) > len(projects_old):
+        tmp = projects_new.difference(projects_old)
+        diff['add'] = ' '.join(tmp)
+    elif len(projects_old) < len(projects_new):
+        tmp = projects_old.difference(projects_new)
+        diff['rem'] = ' '.join(tmp)
+    else:
+        diff['add'] = ' '.join(projects_new)
+        diff['rem'] = ' '.join(projects_old)
+
+    return diff
 
 
 def main():
@@ -184,35 +220,64 @@ def main():
     session.commit()
 
     # add users to SGE projects
+    # for new users projects and last_projects field are the same so we pick
+    # values from any of them.
     not_sge = session.query(User).filter(User.issgeadded == False).all()
     for u in not_sge:
-        sgecreateuser_cmd = conf_opts['settings']['sgecreateuser']
-        try:
-            os.chdir(os.path.dirname(sgecreateuser_cmd))
-            subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, u.username, u.last_project),
-                                  shell=True, bufsize=512)
-            u.issgeadded = True
-            logger.info('User %s added in SGE project %s' % (u.username, u.last_project))
-
-        except Exception as e:
-            logger.error('Failed adding user %s to SGE: %s' % (u.username, str(e)))
-    session.commit()
-
-    # update SGE projects for users
-    # TODO: support for deletion user from SGE projects
-    update_sge = session.query(User).filter(User.project != User.last_project).all()
-    for u in update_sge:
-        if u.last_project:
+        for project in u.last_projects.split():
             sgecreateuser_cmd = conf_opts['settings']['sgecreateuser']
             try:
                 os.chdir(os.path.dirname(sgecreateuser_cmd))
-                subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, u.username, u.last_project),
+                subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, u.username, project.strip()),
                                     shell=True, bufsize=512)
-                u.project = u.last_project
-                logger.info('User %s updated to SGE project %s' % (u.username, u.last_project))
+                u.issgeadded = True
+                logger.info('User %s added in SGE project %s' % (u.username, project.strip()))
 
             except Exception as e:
-                logger.error('Failed updating user %s to SGE: %s' % (u.username, str(e)))
+                logger.error('Failed adding user %s to SGE: %s' % (u.username, str(e)))
+    session.commit()
+
+    # update SGE projects for users
+    # for existing user that is assigned to new project or signed off the
+    # existing project, projects and last_projects field differ. based on their
+    # values, it will be concluded what needs to be done and projects field
+    # will be update to match last_projects field afterward.
+    update_sge = session.query(User).filter(User.projects != User.last_projects).all()
+    for u in update_sge:
+        diff = diff_projects(u.projects, u.last_projects)
+
+        if diff['add']:
+            for project in diff['add'].split():
+                sgecreateuser_cmd = conf_opts['settings']['sgecreateuser']
+                try:
+                    os.chdir(os.path.dirname(sgecreateuser_cmd))
+                    subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, u.username, project.strip()),
+                                        shell=True, bufsize=512)
+                    logger.info('User %s updated to SGE project %s' % (u.username, project.strip()))
+
+                except Exception as e:
+                    logger.error('Failed updating user %s to SGE: %s' % (u.username, str(e)))
+
+        if diff['rem']:
+            # only leave the message in logs for now
+            # TODO: support for deletion of user from SGE projects
+            for project in diff['rem'].split():
+                logger.info('User %s sign off from SGE project %s' % (u.username, project.strip()))
+
+        # this one is called to explicitly set SGE default_project to user's
+        # last_project assigned
+        if diff['last'] not in diff['add']:
+            sgecreateuser_cmd = conf_opts['settings']['sgecreateuser']
+            try:
+                os.chdir(os.path.dirname(sgecreateuser_cmd))
+                subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, u.username, diff['last'].strip()),
+                                    shell=True, bufsize=512)
+                logger.info('User %s SGE default_project explicitly set to %s' % (u.username, diff['last'].strip()))
+
+            except Exception as e:
+                logger.error('Failed setting SGE default_project for %s to %s' % (u.username, str(e)))
+
+        u.projects = u.last_projects
     session.commit()
 
     # set password for opened user accounts
@@ -231,7 +296,7 @@ def main():
         smtpserver = conf_opts['external']['emailsmtp']
         emailfrom = conf_opts['external']['emailfrom']
         emailsubject = conf_opts['external']['emailsubject']
-        email = extract_email(projects, u.name, u.surname, u.last_project)
+        email = extract_email(projects, u.name, u.surname, u.last_projects, logger)
         u.email = email
 
         e = InfoAccOpen(u.username, u.password, templatepath, smtpserver,
@@ -248,10 +313,14 @@ def main():
         credentials = conf_opts['external']['mailinglistcredentials']
         listname = conf_opts['external']['mailinglistname']
         listserver = conf_opts['external']['mailinglistserver']
-        r = subscribe_maillist(listserver, credentials, listname, u.email, u.username, logger)
-        if r:
-            u.issubscribe = True
-            logger.info('User %s subscribed to %s' % (u.username, listname))
+        if u.email:
+            r = subscribe_maillist(listserver, credentials, listname, u.email, u.username, logger)
+            if r:
+                u.issubscribe = True
+                logger.info('User %s subscribed to %s' % (u.username, listname))
+        else:
+            logger.error('Email for user %s unknown, not trying to subscribe to mailinglist' % u.username)
+
     session.commit()
 
 

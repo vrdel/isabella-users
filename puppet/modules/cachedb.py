@@ -1,6 +1,8 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Table, Column, Integer, String, Unicode, MetaData, ForeignKey, Date, select
+from sqlalchemy import Table, Column, Integer, String, Unicode, MetaData, ForeignKey, Date, DateTime, select
 from sqlalchemy.orm import relationship, backref
+
+import datetime
 
 Base = declarative_base()
 
@@ -11,6 +13,7 @@ class Assign(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(ForeignKey('users.id'))
     project_id = Column(ForeignKey('projects.id'))
+    when = Column(DateTime, default=datetime.datetime.now)
 
 
 class User(Base):
@@ -25,11 +28,11 @@ class User(Base):
     mail = Column(Unicode(60))
     status = Column(Integer)
     date_join = Column(Date)
-    last_project = Column(Unicode(40))
-    projects = relationship("Projects", secondary="assign", backref=backref('users', order_by=id))
+    projects = Column(Unicode(40))
+    projects_assign = relationship("Projects", secondary="assign", backref=backref('users', order_by=id))
 
     def __init__(self, feedid, username, name, surname, feeduid, mail,
-                 date_join, status, last_project):
+                 date_join, status, projects):
         self.feedid = feedid
         self.username = username
         self.name = name
@@ -38,7 +41,7 @@ class User(Base):
         self.mail = mail
         self.date_join = date_join
         self.status = status
-        self.last_project = last_project
+        self.projects = projects
 
 
 class Projects(Base):

@@ -34,7 +34,8 @@ def user_projects_db(yamlusers, skipusers, session):
             continue
 
         user_db = session.query(User).filter(User.username == key).one()
-        projects.append(user_db.last_project)
+        all_projects = [project.idproj for project in user_db.projects_assign]
+        projects.append(' '.join(all_projects).strip())
 
     return projects
 
@@ -48,7 +49,7 @@ def user_projects_yaml(yamlusers, skipusers):
 
         project = value['comment'].split(',')
         if len(project) > 1:
-            projects.append(project[1][1:])
+            projects.append(project[1].strip())
         else:
             projects.append('')
 
@@ -57,15 +58,25 @@ def user_projects_yaml(yamlusers, skipusers):
 
 def user_projects_changed(yaml, db, logger):
     changed = list()
+    diff = set()
 
     if len(yaml) == len(db):
         for (i, p) in enumerate(db):
             if p != yaml[i]:
-                changed.append(p)
+                py = yaml[i].split()
+                pd = p.split()
+                spy = set(py)
+                spd = set(pd)
+                if len(py) > len(pd):
+                    diff.update(spy.difference(spd))
+                else:
+                    diff.update(spd.difference(spy))
     else:
         logger.error('DB and YAML out of sync')
 
         raise SystemExit(1)
+
+    changed = [project for project in diff]
 
     return changed
 
@@ -161,12 +172,13 @@ def main():
     session = Session()
 
     skipusers = conf_opts['settings']['excludeuser']
-    skipusers = set([u.strip() for u in skipusers.split(',')])
+    skipusers = set([user.strip() for user in skipusers.split(',')])
 
     users = session.query(User).all()
     maxuid = session.query(MaxUID).first()
-    usersdb = set(u.username for u in users)
+    usersdb = set(user.username for user in users)
     newusers = usersdb.difference(yamlusers)
+
     yamlprojects = user_projects_yaml(yusers['isabella_users'], skipusers)
     dbprojects = user_projects_db(yusers['isabella_users'], skipusers, session)
     projects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
@@ -178,17 +190,19 @@ def main():
         print("Changed projects")
         print(projects_changed)
 
+    # trigger is new users that exist in the cache db, but are not
+    # presented in yaml. since we're merging new users to existing ones
+    # and going all over them for the full yaml dump, we'll also report
+    # if some new project assignments happened and for whom.
     elif newusers:
         uid = maxuid.uid
         newusersd = dict()
+        added_projects_users = list()
 
-        for u in newusers:
+        for user in newusers:
             uid += 1
-            udb = session.query(User).filter(User.username == u).one()
-            if udb.last_project:
-                comment = '{0} {1}, {2}'.format(udb.name, udb.surname, udb.last_project)
-            else:
-                comment = '{0} {1}'.format(udb.name, udb.surname)
+            udb = session.query(User).filter(User.username == user).one()
+            comment = '{0} {1}, {2}'.format(udb.name, udb.surname, udb.projects)
             newuser = dict(comment='%s' % comment,
                            gid=conf_opts['settings']['gid'],
                            shell=conf_opts['settings']['shell'],
@@ -197,24 +211,27 @@ def main():
             newusersd.update({unidecode(udb.username): newuser})
 
         allusers = merge_users(yusers['isabella_users'], newusersd)
-        for u, d in allusers.items():
-            if u in skipusers:
+        for user, d in allusers.items():
+            if user in skipusers:
                 continue
 
             try:
-                udb = session.query(User).filter(User.username == u).one()
+                udb = session.query(User).filter(User.username == user).one()
                 if conf_opts['settings']['disableuser']:
                     if udb.status == 0:
                         d['shell'] = '/sbin/nologin'
                     elif udb.status == 1:
                         d['shell'] = conf_opts['settings']['shell']
-                if udb.last_project:
-                    d['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname, udb.last_project)
-                else:
-                    d['comment'] = '{0} {1}'.format(udb.name, udb.surname)
+                all_projects = [project.idproj for project in udb.projects_assign]
+                prev_projects =  d['comment'].split(',')[1].strip()
+                if prev_projects != ' '.join(all_projects):
+                    added_projects_users.append(udb.username)
+                d['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname,
+                                                     udb.projects)
+
 
             except NoResultFound as e:
-                logger.error('{1} {0}'.format(u, str(e)))
+                logger.error('{1} {0}'.format(user, str(e)))
                 continue
 
         backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
@@ -224,37 +241,63 @@ def main():
             f = session.query(MaxUID).first()
             f.uid = uid
             session.commit()
+            if added_projects_users:
+                logger.info("Changed projects for %d users: %s" %
+                            (len(added_projects_users), ', '.join(added_projects_users)))
 
+    # trigger here is only new project assignments. so new users, same set of
+    # them in db and yaml, just the associations between projects and users
+    # changed.
     elif projects_changed:
+        added_projects_users, deleted_projects_users = list(), list()
         try:
-            changed_users = list()
-
+            # user is assigned to new project and reflects changes in yaml
+            # comment
             projectschanged_db = session.query(Projects).filter(Projects.idproj.in_(projects_changed)).all()
-            for p in projectschanged_db:
-                users = p.users
-                for u in users:
-                    if u.username in skipusers:
+            for project in projectschanged_db:
+                users = project.users
+                for user in users:
+                    if user.username in skipusers:
                         continue
-                    yaml_user = yusers['isabella_users'][u.username]
-                    yaml_project = yaml_user['comment'].split(',')
-                    if yaml_project:
-                        yaml_project = yaml_project[1][1:]
-                    if yaml_project != u.last_project:
-                        changed_users.append((u.username, u.last_project))
-                        yaml_user['comment'] = '{0} {1}, {2}'.format(u.name, u.surname, u.last_project)
+                    yaml_user = yusers['isabella_users'][user.username]
+                    yaml_projects = yaml_user['comment'].split(',')[1].strip()
+                    if yaml_projects != user.projects:
+                        diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
+                        added_projects_users.append((user.username, ' '.join(diff_project)))
+                        yaml_user['comment'] = '{0} {1}, {2}'.format(user.name, user.surname, user.projects)
 
         except NoResultFound as e:
-            logger.error('{1} {0}'.format(u, str(e)))
+            logger.error('{1} {0}'.format(user, str(e)))
             pass
+
+        # reflect user signoff from project in his yaml comment entry. user's
+        # projects field will not have project id listed as it will be updated
+        # with update-userdb.py prior. remove it from yaml comment field also.
+        for project in projects_changed:
+            for user, metadata in yusers['isabella_users'].items():
+                if project in metadata['comment']:
+                    user = session.query(User).filter(User.username==user).one()
+                    if project not in user.projects:
+                        yaml_user = yusers['isabella_users'][user.username]
+                        diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
+                        deleted_projects_users.append((user.username, ' '.join(diff_project)))
+                        if user.projects:
+                            yaml_user['comment'] = '{0} {1}, {2}'.format(user.name, user.surname, user.projects)
+                        else:
+                            yaml_user['comment'] = '{0} {1},'.format(user.name, user.surname)
 
         backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
         r = write_yaml(conf_opts['external']['isabellausersyaml'], {'isabella_users': yusers['isabella_users']}, logger)
         if r:
-            logger.info("Update associations of existing users to projects: %s " %
-                        ', '.join(['{0} assigned to {1}'.format(t[0], t[1]) for t in changed_users]))
+            if added_projects_users:
+                logger.info("Update associations of existing users to projects: %s " %
+                            ', '.join(['{0} assigned to {1}'.format(t[0], t[1]) for t in added_projects_users]))
+            if deleted_projects_users:
+                logger.info("Update associations of existing users to projects: %s " %
+                            ', '.join(['{0} sign off from {1}'.format(t[0], t[1]) for t in deleted_projects_users]))
 
     else:
-        logger.info("No actions needed")
+        logger.info("No changes in projects and users")
 
 
 if __name__ == '__main__':

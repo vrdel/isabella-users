@@ -25,13 +25,13 @@ class User(Base):
     issentemail = Column(Boolean)
     date_created = Column(Date)
     status = Column(Integer)
-    project = Column(Unicode(40))
-    last_project = Column(Unicode(40))
+    projects = Column(Unicode(250))
+    last_projects = Column(Unicode(250))
 
     def __init__(self, username, name, surname, email, shell, homedir, password,
                  uid, gid, issubscribe, ispasswordset, ishomecreated,
-                 issgeadded,  issentemail, date_created, status, project,
-                 last_project):
+                 issgeadded,  issentemail, date_created, status, projects,
+                 last_projects):
         self.username = username
         self.name = name
         self.surname = surname
@@ -48,5 +48,5 @@ class User(Base):
         self.issgeadded = issgeadded
         self.date_created = date_created
         self.status = status
-        self.project = project
-        self.last_project = last_project
+        self.projects = projects
+        self.last_projects = last_projects

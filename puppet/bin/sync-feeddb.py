@@ -108,9 +108,12 @@ def main():
             # project is prolong
             p.date_from = datetime.strptime(project['date_from'], '%Y-%m-%d')
             p.date_to = datetime.strptime(project['date_to'], '%Y-%m-%d')
+            p.name = project['name']
+            p.institution = project['ustanova']
         except NoResultFound:
             p = Projects(feedid=project['id'], idproj=idproj,
-                         respname='', respemail='', institution='', name='',
+                         respname='', respemail='',
+                         institution=project['ustanova'], name=project['name'],
                          date_from=datetime.strptime(project['date_from'], '%Y-%m-%d'),
                          date_to=datetime.strptime(project['date_to'], '%Y-%m-%d'),
                          date_created=datetime.now(),
@@ -160,14 +163,14 @@ def main():
                                      feeduid=feeduid, mail=feedemail,
                                      date_join=datetime.now(),
                                      status=int(user['status_id']),
-                                     last_project='')
+                                     projects='')
                     else:
                         u.mail = feedemail
                 except NoResultFound:
                     u = User(feedid=user['id'], username=gen_username(feedname, feedsurname, allusernames),
                              name=feedname, surname=feedsurname, feeduid=feeduid, mail=feedemail,
                              date_join=datetime.now(),
-                             status=int(user['status_id']), last_project='')
+                             status=int(user['status_id']), projects='')
             if u_dup:
                 p.users.extend([u, u_dup])
             else:
