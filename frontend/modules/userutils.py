@@ -25,18 +25,37 @@ class UserUtils(object):
         return users
 
 
+    def all_users_projects(self):
+        users = dict()
+
+        for user in self.all_users():
+            username = self.get_user_name(user)
+            _, _, projects = self.info_comment(user)
+            users[username] = projects
+
+        return users
+
+
     def all_projects_users(self):
         projects = dict()
         users = self.all_users()
 
-        for u in users:
-            name, surname, project = self.info_comment(u)
+        for user in users:
+            name, surname, project = self.info_comment(user)
 
-            if project in projects:
-                projects[project].append(self.get_user_name(u))
+            if ' ' in project:
+                for proj in project.split():
+                    if proj in projects:
+                        projects[proj].append(self.get_user_name(user))
+                    else:
+                        projects[proj] = list()
+                        projects[proj].append(self.get_user_name(user))
             else:
-                projects[project] = list()
-                projects[project].append(self.get_user_name(u))
+                if project in projects:
+                    projects[project].append(self.get_user_name(user))
+                else:
+                    projects[project] = list()
+                    projects[project].append(self.get_user_name(user))
 
         return projects
 
