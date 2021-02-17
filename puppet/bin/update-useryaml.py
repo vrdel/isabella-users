@@ -197,7 +197,7 @@ def main():
     elif newusers:
         uid = maxuid.uid
         newusersd = dict()
-        changed_users = list()
+        added_projects_users = list()
 
         for user in newusers:
             uid += 1
@@ -225,7 +225,7 @@ def main():
                 all_projects = [project.idproj for project in udb.projects_assign]
                 prev_projects =  d['comment'].split(',')[1].strip()
                 if prev_projects != ' '.join(all_projects):
-                    changed_users.append(udb.username)
+                    added_projects_users.append(udb.username)
                 d['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname,
                                                      udb.projects)
 
@@ -241,17 +241,18 @@ def main():
             f = session.query(MaxUID).first()
             f.uid = uid
             session.commit()
-            if changed_users:
+            if added_projects_users:
                 logger.info("Changed projects for %d users: %s" %
-                            (len(changed_users), ', '.join(changed_users)))
+                            (len(added_projects_users), ', '.join(added_projects_users)))
 
     # trigger here is only new project assignments. so new users, same set of
     # them in db and yaml, just the associations between projects and users
     # changed.
     elif projects_changed:
+        added_projects_users, deleted_projects_users = list(), list()
         try:
-            changed_users = list()
-
+            # user is assigned to new project and reflects changes in yaml
+            # comment
             projectschanged_db = session.query(Projects).filter(Projects.idproj.in_(projects_changed)).all()
             for project in projectschanged_db:
                 users = project.users
@@ -262,18 +263,38 @@ def main():
                     yaml_projects = yaml_user['comment'].split(',')[1].strip()
                     if yaml_projects != user.projects:
                         diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
-                        changed_users.append((user.username, ' '.join(diff_project)))
+                        added_projects_users.append((user.username, ' '.join(diff_project)))
                         yaml_user['comment'] = '{0} {1}, {2}'.format(user.name, user.surname, user.projects)
 
         except NoResultFound as e:
             logger.error('{1} {0}'.format(user, str(e)))
             pass
 
+        # reflect user signoff from project in his yaml comment entry. user's
+        # projects field will not have project id listed as it will be updated
+        # with update-userdb.py prior. remove it from yaml comment field also.
+        for project in projects_changed:
+            for user, metadata in yusers['isabella_users'].items():
+                if project in metadata['comment']:
+                    user = session.query(User).filter(User.username==user).one()
+                    if project not in user.projects:
+                        yaml_user = yusers['isabella_users'][user.username]
+                        diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
+                        deleted_projects_users.append((user.username, ' '.join(diff_project)))
+                        if user.projects:
+                            yaml_user['comment'] = '{0} {1}, {2}'.format(user.name, user.surname, user.projects)
+                        else:
+                            yaml_user['comment'] = '{0} {1},'.format(user.name, user.surname)
+
         backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
         r = write_yaml(conf_opts['external']['isabellausersyaml'], {'isabella_users': yusers['isabella_users']}, logger)
         if r:
-            logger.info("Update associations of existing users to projects: %s " %
-                        ', '.join(['{0} assigned to {1}'.format(t[0], t[1]) for t in changed_users]))
+            if added_projects_users:
+                logger.info("Update associations of existing users to projects: %s " %
+                            ', '.join(['{0} assigned to {1}'.format(t[0], t[1]) for t in added_projects_users]))
+            if deleted_projects_users:
+                logger.info("Update associations of existing users to projects: %s " %
+                            ', '.join(['{0} sign off from {1}'.format(t[0], t[1]) for t in deleted_projects_users]))
 
     else:
         logger.info("No changes in projects and users")
