@@ -128,14 +128,29 @@ def create_homedir(dir, uid, gid, logger):
         return False
 
 
-def extract_email(projects, name, surname, last_project):
-    for p in projects:
-        if last_project == p['sifra']:
-            users = p['users']
-            for u in users:
-                if (name == concat(unidecode(u['ime'])) and
-                    surname == concat(unidecode(u['prezime']))):
-                    return u['mail']
+def extract_email(projects, name, surname, last_project, logger):
+    email = None
+
+    # last_projects is multi project field now. pick last one, but any will
+    # actually play as we're just grabbing email from the API feed.
+    projects = last_project.split()
+    if projects:
+        last_project = projects[len(projects) - 1]
+
+        for p in projects:
+            if last_project == p['sifra']:
+                users = p['users']
+                for u in users:
+                    if (name == concat(unidecode(u['ime'])) and
+                        surname == concat(unidecode(u['prezime']))):
+                        email = u['mail']
+        if email:
+            return email
+        else:
+            logger.error('Failed grabbing an email for %s %s from the API' % (name, surname))
+    else:
+        logger.error('Failed grabbing an email for %s %s from the API as project is unknown' % (name, surname))
+        return None
 
 
 def diff_projects(old, new):
@@ -281,7 +296,7 @@ def main():
         smtpserver = conf_opts['external']['emailsmtp']
         emailfrom = conf_opts['external']['emailfrom']
         emailsubject = conf_opts['external']['emailsubject']
-        email = extract_email(projects, u.name, u.surname, u.last_project)
+        email = extract_email(projects, u.name, u.surname, u.last_projects, logger)
         u.email = email
 
         e = InfoAccOpen(u.username, u.password, templatepath, smtpserver,
@@ -298,10 +313,14 @@ def main():
         credentials = conf_opts['external']['mailinglistcredentials']
         listname = conf_opts['external']['mailinglistname']
         listserver = conf_opts['external']['mailinglistserver']
-        r = subscribe_maillist(listserver, credentials, listname, u.email, u.username, logger)
-        if r:
-            u.issubscribe = True
-            logger.info('User %s subscribed to %s' % (u.username, listname))
+        if u.email:
+            r = subscribe_maillist(listserver, credentials, listname, u.email, u.username, logger)
+            if r:
+                u.issubscribe = True
+                logger.info('User %s subscribed to %s' % (u.username, listname))
+        else:
+            logger.error('Email for user %s unknown, not trying to subscribe to mailinglist' % u.username)
+
     session.commit()
 
 

@@ -245,7 +245,7 @@ def main():
                 logger.info("Changed projects for %d users: %s" %
                             (len(changed_users), ', '.join(changed_users)))
 
-    # trigger here is only new project assingments. so new users, same set of
+    # trigger here is only new project assignments. so new users, same set of
     # them in db and yaml, just the associations between projects and users
     # changed.
     elif projects_changed:
