@@ -6,7 +6,7 @@
 %define mydist %{dist}
 
 Name:           isabella-users-puppet
-Version:        0.1.8
+Version:        0.1.9
 Release:        1%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
@@ -49,11 +49,14 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{python3_sitelib}/%{underscore %{name}}/
 %{python3_sitelib}/%{underscore %{name}}/*.py
 %dir %{_localstatedir}/log/%{name}/
+%dir %{_sharedstatedir}/%{name}/backup
 %dir %{_sharedstatedir}/%{name}/
 
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Wed Feb 17 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.9-1%{?dist}
+- track all users and projects assignements with passwd/yaml comment field
 * Tue Jan 26 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.8-1%{?dist}
 - bugfix with explicit cast to list of iterable due py3 bump
 * Sun Dec 20 2020 Daniel Vrcic <dvrcic@srce.hr> - 0.1.7-1%{?dist}
