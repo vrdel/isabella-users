@@ -147,9 +147,12 @@ def main():
             # lookup first by uid
             try:
                 u = session.query(User).filter(User.feeduid == feeduid).one()
+                # this ones always get refreshed with actual data on the API.
+                # reasoning is that they may have been changed since last sync.
                 u.mail = feedemail
                 u.name = feedname
                 u.surname = feedsurname
+                u.consent_disable = True if user['status_id'] == 5 else False
             except NoResultFound:
                 try:
                     # uid not found, lookup by name and surname
@@ -166,6 +169,7 @@ def main():
                                      feeduid=feeduid, mail=feedemail,
                                      date_join=datetime.now(),
                                      status=int(user['status_id']),
+                                     consent_disable=False,
                                      projects='')
                     else:
                         u.mail = feedemail
@@ -176,7 +180,9 @@ def main():
                     u = User(feedid=user['id'], username=gen_username(feedname, feedsurname, allusernames),
                              name=feedname, surname=feedsurname, feeduid=feeduid, mail=feedemail,
                              date_join=datetime.now(),
-                             status=int(user['status_id']), projects='')
+                             status=int(user['status_id']),
+                             consent_disable=False,
+                             projects='')
             if u_dup:
                 p.users.extend([u, u_dup])
             else:
