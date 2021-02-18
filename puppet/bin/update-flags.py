@@ -65,15 +65,23 @@ def main():
     Session.configure(bind=engine)
     session = Session()
 
-    logger.info("Set status flags for projects and users expired on %s, after period of grace %s" % (date, gracedays))
+    logger.info("Set status flags for projects and users expired on %s, after period of grace %s days" % (date, gracedays.days))
 
-    # is project expired or not. allow some graceperiod and treat it as active
-    # in such.
+    # set status and grace_status flags for projects. project is dead if
+    # status and grace_status are 0. it's expired (status = 0) but in mercy
+    # grace period if grace_status = 1. otherwise project is active -
+    # status = 1.
     for project in session.query(Projects):
-        if project.date_to + gracedays < date:
+        if project.date_to < date:
             project.status = 0
         else:
             project.status = 1
+
+        if (project.status == 0
+            and project.date_to + gracedays < date):
+            project.grace_status = 0
+        elif project.status == 0:
+            project.grace_status = 1
 
     # conclude if user is active or not. user is active only if he's assigned
     # to at least one active project (set previously).

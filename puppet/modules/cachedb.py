@@ -63,7 +63,7 @@ class Projects(Base):
     date_to = Column(Date)
 
     def __init__(self, feedid, idproj, name, respname, respemail, status,
-                 institution, date_created, date_from, date_to):
+                 grace_status, institution, date_created, date_from, date_to):
         self.feedid = feedid
         self.idproj = idproj
         self.respname = respname
@@ -74,6 +74,7 @@ class Projects(Base):
         self.date_created = date_created
         self.date_from = date_from
         self.date_to = date_to
+        self.grace_status = grace_status
 
 
 class MaxUID(Base):

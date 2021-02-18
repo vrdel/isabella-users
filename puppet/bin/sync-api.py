@@ -120,7 +120,8 @@ def main():
                          date_from=datetime.strptime(project['date_from'], '%Y-%m-%d'),
                          date_to=datetime.strptime(project['date_to'], '%Y-%m-%d'),
                          date_created=datetime.now(),
-                         status=int(project['status_id']))
+                         status=int(project['status_id']),
+                         grace_status=False)
 
         usersdb = set([(concat(ue.name), concat(ue.surname)) for ue in p.users])
         usersfeed = list()
