@@ -41,7 +41,7 @@ def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
 
-    parser = argparse.ArgumentParser(description="isabella-users-puppet disable user DB")
+    parser = argparse.ArgumentParser(description="set user's and project's status flags based on the interested date and state in cache.db . reflect user's project assignments in appropriate field.")
     parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
     parser.add_argument('-t', required=False, help='YYY-MM-DD', type=is_date, dest='date')
     parser.add_argument('-v', required=False, default=False,
@@ -65,7 +65,7 @@ def main():
     Session.configure(bind=engine)
     session = Session()
 
-    logger.info("Update projects and users expired on %s" % date)
+    logger.info("Set status flags for projects and users expired on %s, after period of grace %s" % (date, gracedays))
 
     # is project expired or not. allow some graceperiod and treat it as active
     # in such.
@@ -77,6 +77,8 @@ def main():
 
     # conclude if user is active or not. user is active only if he's assigned
     # to at least one active project (set previously).
+    # set also all current project assignments in the field projects as it will
+    # be checked on update-useryaml.py
     for user in session.query(User):
         proj_statuses = [project.status for project in user.projects_assign]
         if all_false(proj_statuses):

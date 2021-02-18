@@ -149,7 +149,7 @@ def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
 
-    parser = argparse.ArgumentParser(description="isabella-users-puppet refresh user yaml")
+    parser = argparse.ArgumentParser(description="update Puppet YAML listing all users and projects' assignments in their comment field")
     parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
@@ -191,7 +191,7 @@ def main():
         print(projects_changed)
 
     # trigger is new users that exist in the cache db, but are not
-    # presented in yaml. since we're merging new users to existing ones
+    # presen
     # and going all over them for the full yaml dump, we'll also report
     # if some new project assignments happened and for whom.
     elif newusers:
@@ -228,7 +228,6 @@ def main():
                     added_projects_users.append(udb.username)
                 d['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname,
                                                      udb.projects)
-
 
             except NoResultFound as e:
                 logger.error('{1} {0}'.format(user, str(e)))
