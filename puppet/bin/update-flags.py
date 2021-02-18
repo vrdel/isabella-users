@@ -29,9 +29,16 @@ def is_date(date):
         raise SystemExit(1)
 
 
-def all_false(cont):
-    for e in cont:
-        if e:
+def any_active(statuses):
+    for status in statuses:
+        if status == 1:
+            return True
+    return False
+
+
+def all_false(statuses):
+    for status in statuses:
+        if status:
             return False
 
     return True
@@ -67,27 +74,32 @@ def main():
 
     logger.info("Set status flags for projects and users expired on %s, after period of grace %s days" % (date, gracedays.days))
 
-    # set status for projects. project is dead if status is 0. it's expired
-    # (status = 0) but in mercy grace period if grace_status = 2. otherwise
-    # project is active - status = 1.
+    # set status for projects. project is dead and status = 0. it's expired but
+    # in mercy grace period for status = 2. otherwise project is active -
+    # status = 1.
     for project in session.query(Projects):
         if project.date_to + gracedays < date:
             project.status = 0
-        elif project.date_to + gracedays > date and project.date_to < date:
+        elif (project.date_to + gracedays > date
+              and project.date_to < date):
             project.status = 2
         else:
             project.status = 1
 
     # conclude if user is active or not. user is active only if he's assigned
-    # to at least one active project (set previously).
+    # to at least one active project (set previously). he's in mercy grace
+    # period if he's neither active or inactive.
     # set also all current project assignments in the field projects as it will
     # be checked on update-useryaml.py
     for user in session.query(User):
         proj_statuses = [project.status for project in user.projects_assign]
         if all_false(proj_statuses):
             user.status = 0
-        else:
+        elif any_active(proj_statuses):
             user.status = 1
+        else:
+            user.status = 2
+
         all_projects = [project.idproj for project in user.projects_assign]
         user.projects = ' '.join(all_projects)
 
