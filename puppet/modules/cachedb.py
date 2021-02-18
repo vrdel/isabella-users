@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Table, Column, Integer, String, Unicode, MetaData, ForeignKey, Date, DateTime, select
+from sqlalchemy import Table, Column, Integer, String, Unicode, MetaData, ForeignKey, Date, DateTime, Boolean
 from sqlalchemy.orm import relationship, backref
 
 import datetime
@@ -28,11 +28,12 @@ class User(Base):
     mail = Column(Unicode(60))
     status = Column(Integer)
     date_join = Column(Date)
+    consent_disable = Column(Boolean)
     projects = Column(Unicode(40))
     projects_assign = relationship("Projects", secondary="assign", backref=backref('users', order_by=id))
 
     def __init__(self, feedid, username, name, surname, feeduid, mail,
-                 date_join, status, projects):
+                 date_join, status, consent_disable, projects):
         self.feedid = feedid
         self.username = username
         self.name = name
@@ -41,6 +42,7 @@ class User(Base):
         self.mail = mail
         self.date_join = date_join
         self.status = status
+        self.consent_disable = consent_disable
         self.projects = projects
 
 
@@ -54,6 +56,7 @@ class Projects(Base):
     respname = Column(Unicode(20))
     respemail = Column(Unicode(60))
     status = Column(Integer)
+    grace_status = Column(Boolean)
     institution = Column(Unicode(180))
     date_created = Column(Date)
     date_from = Column(Date)
