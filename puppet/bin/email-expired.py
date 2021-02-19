@@ -37,13 +37,17 @@ def main():
     Session.configure(bind=engine)
     session = Session()
 
-    expired_users = session.query(User).filter(User.status==0).all()
-
+    expired_users = session.query(User).filter(User.status == 2).all()
     for user in expired_users:
-        print(user.username)
-
-    for project in user.projects:
-        print(project)
+        dates = [project.date_to for project in user.projects_assign]
+        most_recent = max(dates)
+        last_project = [project for project in user.projects_assign
+                        if project.date_to == most_recent]
+        last_project = last_project[0]
+        if last_project.date_to == datetime.date.today() - datetime.timedelta(days=1):
+            print('i would send an email')
+            print(f'{last_project.name}')
+            print(f'{user.username}')
 
 
 if __name__ == '__main__':
