@@ -264,7 +264,7 @@ def main():
         try:
             udb = session.query(User).filter(User.username == user).one()
             if conf_opts['settings']['disableuser']:
-                if udb.status == 0:
+                if udb.status == 0 and data['shell'] != '/sbin/nologin':
                     data['shell'] = '/sbin/nologin'
                     disabled_users.append(udb.username)
                 elif udb.status == 1:
@@ -273,6 +273,8 @@ def main():
         except NoResultFound as e:
             logger.error('{1} {0}'.format(user, str(e)))
             continue
+    if not disabled_users:
+        logger.info("No users that needs to be disabled")
 
     # yaml changes needs to be written
     yaml_write_content = None
