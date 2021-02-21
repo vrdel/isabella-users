@@ -240,7 +240,7 @@ def main():
     # for existing user that is assigned to new project or signed off the
     # existing project, projects and last_projects field differ. based on their
     # values, it will be concluded what needs to be done and projects field
-    # will be update to match last_projects field afterward.
+    # will be updated to match last_projects field afterward.
     update_sge = session.query(User).filter(User.projects != User.last_projects).all()
     for u in update_sge:
         diff = diff_projects(u.projects, u.last_projects)

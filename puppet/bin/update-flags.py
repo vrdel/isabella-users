@@ -31,7 +31,7 @@ def is_date(date):
 
 def any_active(statuses):
     for status in statuses:
-        if status == 1:
+        if status:
             return True
     return False
 
@@ -40,7 +40,6 @@ def all_false(statuses):
     for status in statuses:
         if status:
             return False
-
     return True
 
 
@@ -62,9 +61,9 @@ def main():
         cachedb = args.sql
 
     if args.date:
-        date = args.date
+        datenow = args.date
     else:
-        date = datetime.date.today()
+        datenow = datetime.date.today()
 
     engine = create_engine('sqlite:///%s' % cachedb, echo=args.verbose)
 
@@ -72,16 +71,16 @@ def main():
     Session.configure(bind=engine)
     session = Session()
 
-    logger.info("Set status flags for projects and users expired on %s, after period of grace %s days" % (date, gracedays.days))
+    logger.info("Set status flags for projects and users expired on %s, after period of grace %s days" % (datenow, gracedays.days))
 
     # set status for projects. project is dead and status = 0. it's expired but
     # in mercy grace period for status = 2. otherwise project is active -
     # status = 1.
     for project in session.query(Projects):
-        if project.date_to + gracedays < date:
+        if project.date_to + gracedays < datenow:
             project.status = 0
-        elif (project.date_to + gracedays > date
-              and project.date_to < date):
+        elif (project.date_to + gracedays > datenow
+              and project.date_to < datenow):
             project.status = 2
         else:
             project.status = 1
