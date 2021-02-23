@@ -28,7 +28,6 @@ def main():
 
     cachedb = conf_opts['settings']['cache']
     gracedays = datetime.timedelta(days=conf_opts['settings']['gracedays'])
-    import ipdb; ipdb.set_trace()
 
     if args.sql:
         cachedb = args.sql
@@ -53,6 +52,12 @@ def main():
         if last_project.date_to == datetime.date.today():
             print('grace active - i would send an email')
             print(f' {user.username}')
+            conf_ext = conf_opts['external']
+            email = EmailSend(conf_ext['emailtemplatewarn'],
+                              conf_ext['emailhtml'], conf_ext['emailsmtp'],
+                              conf_ext['emailfrom'], 'dvrcic@srce.hr',
+                              gracedays, logger)
+            email.send()
         if last_project.date_to + gracedays == datetime.date.today():
             print('end grace - i would send an email')
             print(f' {user.username}')
@@ -60,4 +65,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

@@ -5,33 +5,43 @@ from email.header import Header
 import datetime
 import smtplib
 import socket
+import datetime
 
 
 class EmailSend(object):
-    def __init__(self, templatepath, smtpserver, emailfrom,
-                 emailto, logger):
-        self.templatepath = templatepath
+    def __init__(self, templatecontent, templatehtml, smtpserver, emailfrom,
+                 emailto, gracedays, logger):
+        self.templatecontent = templatecontent
+        self.templatehtml = templatehtml
         self.smtpserver = smtpserver
         self.emailfrom = emailfrom
         self.emailto = emailto
-        self.emailsubject = emailsubject
         self.logger = logger
+        self.gracedays = gracedays
 
     def _construct_email(self):
         text = None
-        with open(self.templatepath) as fp:
+        with open(self.templatecontent) as fp:
             text = fp.readlines()
+            self.subject = text[0].strip()
 
-        if text:
-            text = ''.join(text)
-            text = text.replace('__USERNAME__', self.username)
-            text = text.replace('__PASSWORD__', self.password)
+        with open(self.templatehtml) as fp:
+            html = fp.readlines()
 
-            m = MIMEText(text, 'plain', 'utf-8')
+        text.pop(0); text.pop(0)
+        text = ''.join(text)
+        text = text.replace('__DATETO__', str(datetime.date.today()))
+        text = text.replace('__DATEGRACETO__', str(datetime.date.today() + self.gracedays))
+        html = ''.join(html)
+        html = html.replace('__MESSAGE__', text)
+        html = html.replace('__YEAR__', str(datetime.date.today().year))
+
+        if html:
+            m = MIMEText(html, 'html', 'utf-8')
             m['From'] = self.emailfrom
             m['Cc'] = self.emailfrom
             m['To'] = self.emailto
-            m['Subject'] = Header(self.emailsubject, 'utf-8')
+            m['Subject'] = Header(self.subject, 'utf-8')
 
             return m.as_string()
 
@@ -41,7 +51,7 @@ class EmailSend(object):
     def send(self):
         email_text = self._construct_email()
 
-        for part in [self.emailfrom, self.emailto, self.emailsubject]:
+        for part in [self.emailfrom, self.emailto, self.subject]:
             if not part:
                 self.logger.error('To, From or Subject missing')
                 return False
