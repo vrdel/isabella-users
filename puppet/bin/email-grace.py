@@ -7,6 +7,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 from isabella_users_puppet.config import parse_config
 from isabella_users_puppet.log import Logger
+from isabella_users_puppet.msg import EmailSend
 
 import argparse
 import datetime
@@ -27,6 +28,7 @@ def main():
 
     cachedb = conf_opts['settings']['cache']
     gracedays = datetime.timedelta(days=conf_opts['settings']['gracedays'])
+    import ipdb; ipdb.set_trace()
 
     if args.sql:
         cachedb = args.sql
