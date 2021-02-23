@@ -50,8 +50,6 @@ def main():
                         if project.date_to == most_recent]
         last_project = last_project[0]
         if last_project.date_to == datetime.date.today():
-            print('grace active - i would send an email')
-            print(f' {user.username}')
             conf_ext = conf_opts['external']
             email = EmailSend(conf_ext['emailtemplatewarn'],
                               conf_ext['emailhtml'], conf_ext['emailsmtp'],
@@ -59,8 +57,12 @@ def main():
                               gracedays, logger)
             email.send()
         if last_project.date_to + gracedays == datetime.date.today():
-            print('end grace - i would send an email')
-            print(f' {user.username}')
+            conf_ext = conf_opts['external']
+            email = EmailSend(conf_ext['emailtemplatedelete'],
+                              conf_ext['emailhtml'], conf_ext['emailsmtp'],
+                              conf_ext['emailfrom'], 'dvrcic@srce.hr',
+                              gracedays, logger)
+            email.send()
 
 
 if __name__ == '__main__':
