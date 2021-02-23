@@ -75,7 +75,7 @@ def main():
 
     cachedb = conf_opts['settings']['cache']
 
-    parser = argparse.ArgumentParser(description="isabella-users-puppet sync DB")
+    parser = argparse.ArgumentParser(description="pull latest users, projects and assignments from the API and store it in cache.db")
     parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
@@ -111,6 +111,9 @@ def main():
             p.name = project['name']
             p.institution = project['ustanova']
         except NoResultFound:
+            # project status is taken from the API only this time when we're
+            # registering new one in the cache.db. later on it's controlled and
+            # set by the update-userdb.py
             p = Projects(feedid=project['id'], idproj=idproj,
                          respname='', respemail='',
                          institution=project['ustanova'], name=project['name'],
@@ -144,9 +147,12 @@ def main():
             # lookup first by uid
             try:
                 u = session.query(User).filter(User.feeduid == feeduid).one()
+                # this ones always get refreshed with actual data on the API.
+                # reasoning is that they may have been changed since last sync.
                 u.mail = feedemail
                 u.name = feedname
                 u.surname = feedsurname
+                u.consent_disable = True if user['status_id'] == 5 else False
             except NoResultFound:
                 try:
                     # uid not found, lookup by name and surname
@@ -163,14 +169,20 @@ def main():
                                      feeduid=feeduid, mail=feedemail,
                                      date_join=datetime.now(),
                                      status=int(user['status_id']),
+                                     consent_disable=False,
                                      projects='')
                     else:
                         u.mail = feedemail
                 except NoResultFound:
+                    # user status is taken from the API only this time when we're
+                    # registering new one in the cache.db. later on it's controlled and
+                    # set by the update-userdb.py
                     u = User(feedid=user['id'], username=gen_username(feedname, feedsurname, allusernames),
                              name=feedname, surname=feedsurname, feeduid=feeduid, mail=feedemail,
                              date_join=datetime.now(),
-                             status=int(user['status_id']), projects='')
+                             status=int(user['status_id']),
+                             consent_disable=False,
+                             projects='')
             if u_dup:
                 p.users.extend([u, u_dup])
             else:

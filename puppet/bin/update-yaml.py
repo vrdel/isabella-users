@@ -81,19 +81,6 @@ def user_projects_changed(yaml, db, logger):
     return changed
 
 
-def is_date(date):
-    try:
-        _ = datetime.datetime.strptime(date, '%Y-%m-%d')
-        t = tuple(int(i) for i in date.split('-'))
-
-        return datetime.date(*t)
-
-    except ValueError:
-        print('Date not in %Y-%m-%d format')
-
-        raise SystemExit(1)
-
-
 def load_yaml(path, logger):
     try:
         with open(path, 'r') as stream:
@@ -125,16 +112,21 @@ def backup_yaml(path, logger):
 
 
 def write_yaml(path, data, logger):
+    ret = None
     try:
         with open(path, 'w') as stream:
             yaml.dump(data, stream, default_flow_style=False)
-        return True
+        ret = True
 
     except yaml.YAMLError as e:
         logger.error(e)
+        ret = False
 
     except Exception as e:
         logger.error(e)
+        ret = False
+
+    return ret
 
 
 def merge_users(old, new):
@@ -149,12 +141,10 @@ def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
 
-    parser = argparse.ArgumentParser(description="isabella-users-puppet refresh user yaml")
+    parser = argparse.ArgumentParser(description="update Puppet YAML listing all users and projects' assignments in their comment field")
     parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
-    parser.add_argument('-n', required=False, default=False,
-                        action='store_true', help='No operation, just print changes', dest='nop')
     args = parser.parse_args()
 
     cachedb = conf_opts['settings']['cache']
@@ -183,18 +173,11 @@ def main():
     dbprojects = user_projects_db(yusers['isabella_users'], skipusers, session)
     projects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
 
-    if args.nop:
-        print("Accounts to be opened:")
-        print("Diff DB - YAML")
-        print(newusers)
-        print("Changed projects")
-        print(projects_changed)
-
     # trigger is new users that exist in the cache db, but are not
     # presented in yaml. since we're merging new users to existing ones
     # and going all over them for the full yaml dump, we'll also report
     # if some new project assignments happened and for whom.
-    elif newusers:
+    if newusers:
         uid = maxuid.uid
         newusersd = dict()
         added_projects_users = list()
@@ -211,39 +194,23 @@ def main():
             newusersd.update({unidecode(udb.username): newuser})
 
         allusers = merge_users(yusers['isabella_users'], newusersd)
-        for user, d in allusers.items():
+        for user, metadata in allusers.items():
             if user in skipusers:
                 continue
 
             try:
                 udb = session.query(User).filter(User.username == user).one()
-                if conf_opts['settings']['disableuser']:
-                    if udb.status == 0:
-                        d['shell'] = '/sbin/nologin'
-                    elif udb.status == 1:
-                        d['shell'] = conf_opts['settings']['shell']
                 all_projects = [project.idproj for project in udb.projects_assign]
-                prev_projects =  d['comment'].split(',')[1].strip()
+                prev_projects =  metadata['comment'].split(',')[1].strip()
                 if prev_projects != ' '.join(all_projects):
                     added_projects_users.append(udb.username)
-                d['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname,
+                metadata['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname,
                                                      udb.projects)
-
 
             except NoResultFound as e:
                 logger.error('{1} {0}'.format(user, str(e)))
                 continue
 
-        backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
-        r = write_yaml(conf_opts['external']['isabellausersyaml'], {'isabella_users': allusers}, logger)
-        if r:
-            logger.info("Added %d users: %s" % (len(newusersd), ', '.join(newusersd.keys())))
-            f = session.query(MaxUID).first()
-            f.uid = uid
-            session.commit()
-            if added_projects_users:
-                logger.info("Changed projects for %d users: %s" %
-                            (len(added_projects_users), ', '.join(added_projects_users)))
 
     # trigger here is only new project assignments. so new users, same set of
     # them in db and yaml, just the associations between projects and users
@@ -286,9 +253,56 @@ def main():
                         else:
                             yaml_user['comment'] = '{0} {1},'.format(user.name, user.surname)
 
+    else:
+        logger.info("No changes in projects and users associations")
+
+    # disable users whose grace period is over and are therefore inactive
+    disabled_users = list()
+    for user, data in yusers['isabella_users'].items():
+        if user in skipusers:
+            continue
+        try:
+            udb = session.query(User).filter(User.username == user).one()
+            if conf_opts['settings']['disableuser']:
+                if udb.status == 0 and data['shell'] != '/sbin/nologin':
+                    data['shell'] = '/sbin/nologin'
+                    disabled_users.append(udb.username)
+                elif udb.status == 1:
+                    data['shell'] = conf_opts['settings']['shell']
+
+        except NoResultFound as e:
+            logger.error('{1} {0}'.format(user, str(e)))
+            continue
+    if not disabled_users:
+        logger.info("No users that needs to be disabled")
+
+    # yaml changes needs to be written
+    yaml_write_content = None
+    if newusers or projects_changed or disabled_users:
+        if newusers:
+            yaml_write_content = {'isabella_users': allusers}
+
+        elif projects_changed or disabled_users:
+            yaml_write_content = yusers
+
+        # backup and write once whatever changes were
         backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
-        r = write_yaml(conf_opts['external']['isabellausersyaml'], {'isabella_users': yusers['isabella_users']}, logger)
-        if r:
+        yaml_written = write_yaml(conf_opts['external']['isabellausersyaml'], yaml_write_content, logger)
+
+        if not yaml_written:
+            logger.error("Error saving YAML changes")
+            raise SystemExit(1)
+
+        if newusers:
+            logger.info("Added %d users: %s" % (len(newusersd), ', '.join(newusersd.keys())))
+            f = session.query(MaxUID).first()
+            f.uid = uid
+            session.commit()
+            if added_projects_users:
+                logger.info("Changed projects for %d users: %s" %
+                            (len(added_projects_users), ', '.join(added_projects_users)))
+
+        elif projects_changed:
             if added_projects_users:
                 logger.info("Update associations of existing users to projects: %s " %
                             ', '.join(['{0} assigned to {1}'.format(t[0], t[1]) for t in added_projects_users]))
@@ -296,8 +310,9 @@ def main():
                 logger.info("Update associations of existing users to projects: %s " %
                             ', '.join(['{0} sign off from {1}'.format(t[0], t[1]) for t in deleted_projects_users]))
 
-    else:
-        logger.info("No changes in projects and users")
+        if disabled_users:
+            logger.info("Disabled %s users: %s" % (len(disabled_users), ', '.join(disabled_users)))
+            session.commit()
 
 
 if __name__ == '__main__':

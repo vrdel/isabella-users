@@ -61,7 +61,6 @@ def assign_projectusers(session, pu):
         return False
 
 
-
 def db_users_projects(session=None):
     all_users_projects_db = dict()
 

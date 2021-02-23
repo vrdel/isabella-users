@@ -131,14 +131,13 @@ def create_homedir(dir, uid, gid, logger):
 def extract_email(projects, name, surname, last_project, logger):
     email = None
 
-    # last_projects is multi project field now. pick last one, but any will
+    # last_project is multi project field now. pick last one, but any will
     # actually play as we're just grabbing email from the API feed.
-    projects = last_project.split()
     if projects:
-        last_project = projects[len(projects) - 1]
+        target_project = last_project.split()[-1]
 
         for p in projects:
-            if last_project == p['sifra']:
+            if target_project == p['sifra']:
                 users = p['users']
                 for u in users:
                     if (name == concat(unidecode(u['ime'])) and
@@ -241,7 +240,7 @@ def main():
     # for existing user that is assigned to new project or signed off the
     # existing project, projects and last_projects field differ. based on their
     # values, it will be concluded what needs to be done and projects field
-    # will be update to match last_projects field afterward.
+    # will be updated to match last_projects field afterward.
     update_sge = session.query(User).filter(User.projects != User.last_projects).all()
     for u in update_sge:
         diff = diff_projects(u.projects, u.last_projects)

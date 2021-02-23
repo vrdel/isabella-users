@@ -15,6 +15,11 @@ def parse_config(logger=None):
                 if section.startswith('external'):
                     confopts['external'] = ({'subscription': config.get(section, 'subscription')})
                     confopts['external'].update({'isabellausersyaml': config.get(section, 'isabellausersyaml')})
+                    confopts['external'].update({'emailfrom': config.get(section, 'emailfrom')})
+                    confopts['external'].update({'emailsmtp': config.get(section, 'emailsmtp')})
+                    confopts['external'].update({'emailtemplatewarn': config.get(section, 'emailtemplatewarn')})
+                    confopts['external'].update({'emailtemplatedelete': config.get(section, 'emailtemplatedelete')})
+                    confopts['external'].update({'emailhtml': config.get(section, 'emailhtml')})
 
                 if section.startswith('settings'):
                     confopts['settings'] = {'gid': config.getint(section, 'gid')}
