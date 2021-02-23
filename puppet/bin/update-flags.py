@@ -17,6 +17,9 @@ conf_opts = parse_config()
 
 
 def is_date(date):
+    """
+        Enforce specific date format on argument
+    """
     try:
         _ = datetime.datetime.strptime(date, '%Y-%m-%d')
         t = tuple(int(i) for i in date.split('-'))
@@ -30,6 +33,11 @@ def is_date(date):
 
 
 def any_active(statuses):
+    """
+        Initially consider all projects inactive (status=0).
+        If at least one of them is active (status=1) then the
+        statement is not true.
+    """
     for status in statuses:
         if status == 1:
             return True
@@ -37,6 +45,11 @@ def any_active(statuses):
 
 
 def all_false(statuses):
+    """
+        Initially consider all projects inactive (status=0).
+        If any of them is active (status=1) or grace (status=2)
+        than the statements is not true.
+    """
     for status in statuses:
         if status == 1 or status == 2:
             return False
