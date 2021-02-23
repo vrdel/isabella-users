@@ -37,17 +37,23 @@ def main():
     Session.configure(bind=engine)
     session = Session()
 
-    expired_users = session.query(User).filter(User.status == 2).all()
-    for user in expired_users:
+    # take into account only users for which grace period is active
+    # send two emails for them - on the date_to of last active project
+    # and date_to + gracedays. if user is marked
+    grace_users = session.query(User).filter(User.status == 2).all()
+    for user in grace_users:
+        print(user.username)
         dates = [project.date_to for project in user.projects_assign]
         most_recent = max(dates)
         last_project = [project for project in user.projects_assign
                         if project.date_to == most_recent]
         last_project = last_project[0]
-        if last_project.date_to == datetime.date.today() - datetime.timedelta(days=1):
-            print('i would send an email')
-            print(f'{last_project.name}')
-            print(f'{user.username}')
+        if last_project.date_to == datetime.date.today():
+            print('grace active - i would send an email')
+            print(f' {user.username}')
+        if last_project.date_to + gracedays == datetime.date.today():
+            print('end grace - i would send an email')
+            print(f' {user.username}')
 
 
 if __name__ == '__main__':

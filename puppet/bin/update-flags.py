@@ -31,14 +31,14 @@ def is_date(date):
 
 def any_active(statuses):
     for status in statuses:
-        if status:
+        if status == 1:
             return True
     return False
 
 
 def all_false(statuses):
     for status in statuses:
-        if status:
+        if status == 1 or status == 2:
             return False
     return True
 
@@ -79,15 +79,17 @@ def main():
     for project in session.query(Projects):
         if project.date_to + gracedays < datenow:
             project.status = 0
-        elif (project.date_to + gracedays > datenow
-              and project.date_to < datenow):
+        elif (project.date_to + gracedays >= datenow
+              and project.date_to <= datenow):
             project.status = 2
         else:
             project.status = 1
 
     # conclude if user is active or not. user is active only if he's assigned
     # to at least one active project (set previously). he's in mercy grace
-    # period if he's neither active or inactive.
+    # period if he's neither active or inactive. if users responds to first
+    # email saying that is ok to be removed, it will be marked on the API that
+    # will reflect on consent_disable field and thus will be inactivated here.
     # set also all current project assignments in the field projects as it will
     # be checked on update-useryaml.py
     for user in session.query(User):
