@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.header import Header
 import datetime
@@ -21,6 +22,7 @@ class EmailSend(object):
 
     def _construct_email(self):
         text = None
+
         with open(self.templatecontent) as fp:
             text = fp.readlines()
             self.subject = text[0].strip()
@@ -28,6 +30,12 @@ class EmailSend(object):
         with open(self.templatehtml) as fp:
             html = fp.readlines()
 
+        multipart_email = MIMEMultipart('alternative')
+        multipart_email['From'] = self.emailfrom
+        multipart_email['Cc'] = self.emailfrom
+        multipart_email['To'] = self.emailto
+        multipart_email['Subject'] = Header(self.subject, 'utf-8')
+        # remove subject in first two lines of the template
         text.pop(0); text.pop(0)
         text = ''.join(text)
         text = text.replace('__DATETO__', str(datetime.date.today()))
@@ -36,17 +44,16 @@ class EmailSend(object):
         html = html.replace('__MESSAGE__', text)
         html = html.replace('__YEAR__', str(datetime.date.today().year))
 
-        if html:
-            m = MIMEText(html, 'html', 'utf-8')
-            m['From'] = self.emailfrom
-            m['Cc'] = self.emailfrom
-            m['To'] = self.emailto
-            m['Subject'] = Header(self.subject, 'utf-8')
+        # remove html newlines for plain email
+        text = text.replace('<br>', '')
+        if text and html:
+            mailplain = MIMEText(text, 'plain', 'utf-8')
+            mailhtml = MIMEText(html, 'html', 'utf-8')
 
-            return m.as_string()
+            multipart_email.attach(mailhtml)
+            multipart_email.attach(mailplain)
 
-        else:
-            return None
+            return multipart_email.as_string()
 
     def send(self):
         email_text = self._construct_email()
