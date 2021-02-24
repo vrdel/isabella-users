@@ -253,6 +253,7 @@ def main():
             if conf_opts['settings']['disableuser']:
                 if udb.status == 0 and data['shell'] != '/sbin/nologin':
                     data['shell'] = '/sbin/nologin'
+                    udb.date_disabled = datetime.date.today()
                     disabled_users.append(udb.username)
                 elif udb.status == 1:
                     data['shell'] = conf_opts['settings']['shell']
