@@ -113,6 +113,7 @@ def main():
             user.was_active_projects = user.projects
         elif any_active(proj_statuses):
             user.status = 1
+            user.expire_email = False
         else:
             user.status = 2
 

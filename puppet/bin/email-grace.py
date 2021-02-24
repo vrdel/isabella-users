@@ -43,7 +43,8 @@ def main():
     # and date_to + gracedays. if user is marked
     grace_users = session.query(User).filter(User.status == 2).all()
     for user in grace_users:
-        print(user.username)
+        if user.expire_email:
+            continue
         dates = [project.date_to for project in user.projects_assign]
         most_recent = max(dates)
         last_project = [project for project in user.projects_assign
@@ -63,6 +64,8 @@ def main():
                               conf_ext['emailfrom'], 'dvrcic@srce.hr',
                               gracedays, logger)
             email.send()
+            user.expire_email = True
+            session.commit()
 
 
 if __name__ == '__main__':
