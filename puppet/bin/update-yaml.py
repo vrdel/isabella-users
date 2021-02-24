@@ -26,13 +26,10 @@ def avail_users(stream):
     return users
 
 
-def user_projects_db(yamlusers, skipusers, session):
+def user_projects_db(yamlusers, session):
     projects = list()
 
     for (key, value) in yamlusers.items():
-        if key in skipusers:
-            continue
-
         user_db = session.query(User).filter(User.username == key).one()
         all_projects = [project.idproj for project in user_db.projects_assign]
         projects.append(' '.join(all_projects).strip())
@@ -40,13 +37,10 @@ def user_projects_db(yamlusers, skipusers, session):
     return projects
 
 
-def user_projects_yaml(yamlusers, skipusers):
+def user_projects_yaml(yamlusers):
     projects = list()
 
     for (key, value) in yamlusers.items():
-        if key in skipusers:
-            continue
-
         project = value['comment'].split(',')
         if len(project) > 1:
             projects.append(project[1].strip())
@@ -161,16 +155,13 @@ def main():
     Session.configure(bind=engine)
     session = Session()
 
-    skipusers = conf_opts['settings']['excludeuser']
-    skipusers = set([user.strip() for user in skipusers.split(',')])
-
     users = session.query(User).all()
     maxuid = session.query(MaxUID).first()
     usersdb = set(user.username for user in users)
     newusers = usersdb.difference(yamlusers)
 
-    yamlprojects = user_projects_yaml(yusers['isabella_users'], skipusers)
-    dbprojects = user_projects_db(yusers['isabella_users'], skipusers, session)
+    yamlprojects = user_projects_yaml(yusers['isabella_users'])
+    dbprojects = user_projects_db(yusers['isabella_users'], session)
     projects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
 
     # trigger is new users that exist in the cache db, but are not
@@ -195,9 +186,6 @@ def main():
 
         allusers = merge_users(yusers['isabella_users'], newusersd)
         for user, metadata in allusers.items():
-            if user in skipusers:
-                continue
-
             try:
                 udb = session.query(User).filter(User.username == user).one()
                 all_projects = [project.idproj for project in udb.projects_assign]
@@ -224,8 +212,6 @@ def main():
             for project in projectschanged_db:
                 users = project.users
                 for user in users:
-                    if user.username in skipusers:
-                        continue
                     yaml_user = yusers['isabella_users'][user.username]
                     try:
                         yaml_projects = yaml_user['comment'].split(',')[1].strip()
@@ -262,8 +248,6 @@ def main():
     # disable users whose grace period is over and are therefore inactive
     disabled_users = list()
     for user, data in yusers['isabella_users'].items():
-        if user in skipusers:
-            continue
         try:
             udb = session.query(User).filter(User.username == user).one()
             if conf_opts['settings']['disableuser']:

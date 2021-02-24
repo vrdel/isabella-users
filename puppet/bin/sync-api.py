@@ -113,7 +113,7 @@ def main():
         except NoResultFound:
             # project status is taken from the API only this time when we're
             # registering new one in the cache.db. later on it's controlled and
-            # set by the update-userdb.py
+            # set by the update-flags.py
             p = Projects(feedid=project['id'], idproj=idproj,
                          respname='', respemail='',
                          institution=project['ustanova'], name=project['name'],
@@ -159,7 +159,9 @@ def main():
                     u = session.query(User).filter(
                         and_(User.name == feedname,
                              User.surname == feedsurname)).one()
-                    # if found, but with different uid - we have a duplicate
+                    # if found, but with different uid - we have a duplicate.
+                    # these are the cases where Imenko Prezimenovic changes the
+                    # institution.
                     if u.feeduid != feeduid:
                         u_dup = User(feedid=user['id'],
                                      username=gen_username(feedname,
