@@ -40,7 +40,7 @@ class EmailSend(object):
         # remove subject in first two lines of the template
         text.pop(0); text.pop(0)
         text = ''.join(text)
-        text = text.replace('__DATETO__', str(datetime.date.today()))
+        text = text.replace('__DATETO__', str(datetime.datetime.now().strftime('%d.%m.%Y')))
         text = text.replace('__PROJECTNAME__', self.project.name)
         text = text.replace('__PROJECTID__', str(self.project.feedid))
         html = ''.join(html)
