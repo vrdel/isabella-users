@@ -29,7 +29,9 @@ class User(Base):
     status = Column(Integer)
     date_join = Column(Date)
     consent_disable = Column(Boolean)
-    projects = Column(Unicode(40))
+    date_disabled = Column(Date)
+    projects = Column(Unicode(250))
+    was_active_projects = Column(Unicode(250))
     projects_assign = relationship("Projects", secondary="assign", backref=backref('users', order_by=id))
 
     def __init__(self, feedid, username, name, surname, feeduid, mail,
@@ -44,6 +46,8 @@ class User(Base):
         self.status = status
         self.consent_disable = consent_disable
         self.projects = projects
+        self.date_disabled = None
+        self.was_active_projects = None
 
 
 class Projects(Base):
