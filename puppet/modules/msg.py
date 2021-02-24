@@ -7,11 +7,12 @@ import datetime
 import smtplib
 import socket
 import datetime
+import re
 
 
 class EmailSend(object):
     def __init__(self, templatecontent, templatehtml, smtpserver, emailfrom,
-                 emailto, gracedays, logger):
+                 emailto, project, gracedays, logger):
         self.templatecontent = templatecontent
         self.templatehtml = templatehtml
         self.smtpserver = smtpserver
@@ -19,6 +20,7 @@ class EmailSend(object):
         self.emailto = emailto
         self.logger = logger
         self.gracedays = gracedays
+        self.project = project
 
     def _construct_email(self):
         text = None
@@ -39,13 +41,16 @@ class EmailSend(object):
         text.pop(0); text.pop(0)
         text = ''.join(text)
         text = text.replace('__DATETO__', str(datetime.date.today()))
-        text = text.replace('__DATEGRACETO__', str(datetime.date.today() + self.gracedays))
+        text = text.replace('__PROJECTNAME__', self.project.name)
+        text = text.replace('__PROJECTID__', str(self.project.feedid))
         html = ''.join(html)
         html = html.replace('__MESSAGE__', text)
         html = html.replace('__YEAR__', str(datetime.date.today().year))
 
         # remove html newlines for plain email
         text = text.replace('<br>', '')
+        text = re.sub(r'<a href.*\">', '', text)
+        text = re.sub(r'</a>', '', text)
         if text and html:
             mailplain = MIMEText(text, 'plain', 'utf-8')
             mailhtml = MIMEText(html, 'html', 'utf-8')
