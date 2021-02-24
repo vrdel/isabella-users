@@ -40,15 +40,23 @@ def main():
 
     disabled_users = session.query(User).filter(User.status == 0).all()
     for user in disabled_users:
+        if user.expire_email:
+            continue
         dates = [project.date_to for project in user.projects_assign]
         if dates:
             most_recent = max(dates)
             last_project = [project for project in user.projects_assign
                             if project.date_to == most_recent]
             last_project = last_project[0]
-            logger.info(f'Sent expire email for {user.username} {last_project.idproj} @ {user.mail} ')
-            # user.expire_email = True
-            # session.commit()
+            conf_ext = conf_opts['external']
+            email = EmailSend(conf_ext['emailtemplatewarn'],
+                              conf_ext['emailhtml'], conf_ext['emailsmtp'],
+                              conf_ext['emailfrom'], user.mail,
+                              last_project, gracedays, logger)
+            if email.send():
+                logger.info(f'Sent expire email for {user.username} {last_project.idproj} @ {user.mail} ')
+                user.expire_email = True
+                session.commit()
 
 if __name__ == '__main__':
     main()

@@ -54,7 +54,7 @@ def main():
             conf_ext = conf_opts['external']
             email = EmailSend(conf_ext['emailtemplatewarn'],
                               conf_ext['emailhtml'], conf_ext['emailsmtp'],
-                              conf_ext['emailfrom'], 'dvrcic@srce.hr',
+                              conf_ext['emailfrom'], user.mail,
                               last_project, gracedays, logger)
             if email.send():
                 logger.info(f'Sent grace email for {user.username} {last_project.idproj} @ {user.mail} ')
@@ -62,7 +62,7 @@ def main():
             conf_ext = conf_opts['external']
             email = EmailSend(conf_ext['emailtemplatewarn'],
                               conf_ext['emailhtml'], conf_ext['emailsmtp'],
-                              conf_ext['emailfrom'], 'dvrcic@srce.hr',
+                              conf_ext['emailfrom'], user.mail,
                               last_project, gracedays, logger)
             if email.send():
                 logger.info(f'Sent expire email for {user.username} {last_project.idproj} @ {user.mail} ')
