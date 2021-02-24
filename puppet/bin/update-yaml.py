@@ -227,7 +227,10 @@ def main():
                     if user.username in skipusers:
                         continue
                     yaml_user = yusers['isabella_users'][user.username]
-                    yaml_projects = yaml_user['comment'].split(',')[1].strip()
+                    try:
+                        yaml_projects = yaml_user['comment'].split(',')[1].strip()
+                    except IndexError as exc:
+                        yaml_projects = ''
                     if yaml_projects != user.projects:
                         diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
                         added_projects_users.append((user.username, ' '.join(diff_project)))
