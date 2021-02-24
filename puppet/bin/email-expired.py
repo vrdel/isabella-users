@@ -39,6 +39,7 @@ def main():
     session = Session()
 
     disabled_users = session.query(User).filter(User.status == 0).all()
+    disabled_stat = list()
     for user in disabled_users:
         if user.expire_email:
             continue
@@ -56,7 +57,14 @@ def main():
             if email.send():
                 logger.info(f'Sent expire email for {user.username} {last_project.idproj} @ {user.mail} ')
                 user.expire_email = True
+                disabled_stat.append(user)
                 session.commit()
+
+    if not disabled_stat:
+        logger.info('No expired users')
+    else:
+        logger.info(f'Sent emails for {len(disabled_stat)} expired users')
+
 
 if __name__ == '__main__':
     main()

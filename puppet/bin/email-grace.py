@@ -42,6 +42,7 @@ def main():
     # send two emails for them - on the date_to of last active project
     # and date_to + gracedays.
     grace_users = session.query(User).filter(User.status == 2).all()
+    grace_stat, expire_stat = list(), list()
     for user in grace_users:
         if user.expire_email:
             continue
@@ -58,6 +59,7 @@ def main():
                               last_project, gracedays, logger)
             if email.send():
                 logger.info(f'Sent grace email for {user.username} {last_project.idproj} @ {user.mail} ')
+                grace_stat.append(user)
         if last_project.date_to + gracedays == datetime.date.today():
             conf_ext = conf_opts['external']
             email = EmailSend(conf_ext['emailtemplatewarn'],
@@ -67,7 +69,16 @@ def main():
             if email.send():
                 logger.info(f'Sent expire email for {user.username} {last_project.idproj} @ {user.mail} ')
                 user.expire_email = True
+                expire_stat.append(user)
                 session.commit()
+
+    if not grace_stat and not expire_stat:
+        logger.info('No grace and expired users')
+    else:
+        if grace_stat:
+            logger.info('Sent emails for {len(grace_stat)} grace users')
+        if expire_stat:
+            logger.info('Sent emails for {len(expire_stat)} expired users')
 
 
 if __name__ == '__main__':

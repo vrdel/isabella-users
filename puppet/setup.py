@@ -25,6 +25,7 @@ setup(name=NAME,
       data_files=[('/etc/%s' % NAME, glob.glob('config/*')),
                   ('/usr/libexec/%s' % NAME, ['bin/sync-api.py',
                                               'bin/email-expired.py',
+                                              'bin/email-grace.py',
                                               'bin/update-flags.py',
                                               'bin/update-yaml.py']),
                   ])
