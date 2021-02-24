@@ -189,7 +189,10 @@ def main():
             try:
                 udb = session.query(User).filter(User.username == user).one()
                 all_projects = [project.idproj for project in udb.projects_assign]
-                prev_projects =  metadata['comment'].split(',')[1].strip()
+                try:
+                    prev_projects = metadata['comment'].split(',')[1].strip()
+                except IndexError:
+                    prev_projects = ''
                 if prev_projects != ' '.join(all_projects):
                     added_projects_users.append(udb.username)
                 metadata['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname,
