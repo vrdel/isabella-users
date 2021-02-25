@@ -23,6 +23,7 @@ def main():
     parser = argparse.ArgumentParser(description="warn users that they are not active anymore")
     parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
     parser.add_argument('-n', required=False, help='No operation mode', dest='noaction', action='store_true')
+    parser.add_argument('-t', required=False, help='Type of email template (warn, delete)', dest='emailtype', default='warn')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     args = parser.parse_args()
@@ -54,10 +55,15 @@ def main():
                             if project.date_to == most_recent]
             last_project = last_project[0]
             conf_ext = conf_opts['external']
-            email = EmailSend(conf_ext['emailtemplatewarn'],
-                              conf_ext['emailhtml'], conf_ext['emailsmtp'],
-                              conf_ext['emailfrom'], user.mail,
-                              last_project, gracedays, logger)
+
+            if args.emailtype == 'warn':
+                email_template = conf_ext['emailtemplatewarn']
+            else:
+                email_template = conf_ext['emailtemplatedelete']
+
+            email = EmailSend(email_template, conf_ext['emailhtml'],
+                              conf_ext['emailsmtp'], conf_ext['emailfrom'],
+                              user.mail, last_project, gracedays, logger)
             msg = f'Sent expire email for {user.username} {last_project.idproj} @ {user.mail}'
             if args.noaction:
                 logger.info(msg)
