@@ -43,6 +43,7 @@ class EmailSend(object):
         text = text.replace('__DATETO__', str(self.project.date_to.strftime('%d.%m.%Y')))
         text = text.replace('__PROJECTNAME__', self.project.name)
         text = text.replace('__PROJECTID__', str(self.project.feedid))
+        text = text.replace('__GRACEDAYS__', str(self.gracedays))
         html = ''.join(html)
         html = html.replace('__MESSAGE__', text)
         html = html.replace('__YEAR__', str(datetime.date.today().year))
