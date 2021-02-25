@@ -26,6 +26,7 @@ setup(name=NAME,
                   ('/usr/libexec/%s' % NAME, ['bin/sync-api.py',
                                               'bin/email-expired.py',
                                               'bin/email-grace.py',
+                                              'bin/email-test.py',
                                               'bin/update-flags.py',
                                               'bin/update-yaml.py']),
                   ])
