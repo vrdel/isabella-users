@@ -263,8 +263,12 @@ def main():
                     data['comment'] = '{0} {1},'.format(udb.name, udb.surname)
                     udb.date_disabled = datetime.date.today()
                     disabled_users.append(udb.username)
+                    session.commit()
                 elif udb.status == 1:
                     data['shell'] = conf_opts['settings']['shell']
+            else:
+                if udb.status == 0 and data['shell'] != '/sbin/nologin':
+                    disabled_users.append(udb.username)
 
         except NoResultFound as e:
             logger.error('{1} {0}'.format(user, str(e)))
@@ -310,9 +314,12 @@ def main():
                 logger.info("Update associations of existing users to projects: %s " %
                             ', '.join(['{0} sign off from {1}'.format(t[0], t[1]) for t in deleted_projects_users]))
 
+
         if disabled_users:
-            logger.info("Disabled %s users: %s" % (len(disabled_users), ', '.join(disabled_users)))
-            session.commit()
+            if conf_opts['settings']['disableuser']:
+                logger.info("Disabled %s users: %s" % (len(disabled_users), ', '.join(disabled_users)))
+            else:
+                logger.info("%s users that will be disabled: %s" % (len(disabled_users), ', '.join(disabled_users)))
 
 
 if __name__ == '__main__':
