@@ -108,7 +108,11 @@ def main():
     # be checked on update-yaml.py .
     for user in session.query(User):
         proj_statuses = [project.status for project in user.projects_assign]
-        if all_false(proj_statuses) or user.consent_disable:
+        if user.consent_disable:
+            user.status = 0
+            user.was_active_projects = user.projects
+            user.expire_email = True
+        elif all_false(proj_statuses):
             user.status = 0
             user.was_active_projects = user.projects
         elif any_active(proj_statuses):
