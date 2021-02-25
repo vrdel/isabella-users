@@ -97,37 +97,41 @@ def main():
     Session.configure(bind=engine)
     session = Session()
 
-    for project in data:
+    for projectfeed in data:
         # skip projects that have not been accepted yet or are HTC only
-        if int(project['status_id']) > 1 or int(project['htc']) > 1:
+        if int(projectfeed['status_id']) > 1 or int(projectfeed['htc']) > 1:
             continue
-        idproj = project['sifra']
+        idproj = projectfeed['sifra']
         try:
-            p = session.query(Projects).filter(Projects.idproj == idproj).one()
+            projectdb = session.query(Projects).filter(Projects.idproj == idproj).one()
             # update project timeline to most recent one as it is needed if
             # project is prolong
-            p.date_from = datetime.strptime(project['date_from'], '%Y-%m-%d')
-            p.date_to = datetime.strptime(project['date_to'], '%Y-%m-%d')
-            p.name = project['name']
-            p.institution = project['ustanova']
+            projectdb.date_from = datetime.strptime(projectfeed['date_from'], '%Y-%m-%d')
+            projectdb.date_to = datetime.strptime(projectfeed['date_to'], '%Y-%m-%d')
+            projectdb.name = projectfeed['name']
+            projectdb.institution = projectfeed['ustanova']
         except NoResultFound:
             # project status is taken from the API only this time when we're
             # registering new one in the cache.db. later on it's controlled and
-            # set by the update-userdb.py
-            p = Projects(feedid=project['id'], idproj=idproj,
-                         respname='', respemail='',
-                         institution=project['ustanova'], name=project['name'],
-                         date_from=datetime.strptime(project['date_from'], '%Y-%m-%d'),
-                         date_to=datetime.strptime(project['date_to'], '%Y-%m-%d'),
-                         date_created=datetime.now(),
-                         status=int(project['status_id']))
+            # set by the update-flags.py
+            projectdb = Projects(feedid=projectfeed['id'], idproj=idproj,
+                                 respname='', respemail='',
+                                 institution=projectfeed['ustanova'],
+                                 name=projectfeed['name'],
+                                 date_from=datetime.strptime(projectfeed['date_from'],
+                                                             '%Y-%m-%d'),
+                                 date_to=datetime.strptime(projectfeed['date_to'],
+                                                           '%Y-%m-%d'),
+                                 date_created=datetime.now(),
+                                 status=int(projectfeed['status_id']))
 
-        usersdb = set([(concat(ue.name), concat(ue.surname)) for ue in p.users])
+        usersdb = set([(concat(ue.name), concat(ue.surname)) for ue in projectdb.users])
         usersfeed = list()
         diff = set()
-        users = project.get('users', None)
+        users = projectfeed.get('users', None)
         if users:
             usersfeed = set([(concat(unidecode(uf['ime'])), concat(unidecode(uf['prezime']))) for uf in users])
+            # notice if user is signed off from the project
             diff = usersdb.difference(usersfeed)
 
         allusernames = set([username[0] for username in session.query(User.username).all()])
@@ -159,7 +163,9 @@ def main():
                     u = session.query(User).filter(
                         and_(User.name == feedname,
                              User.surname == feedsurname)).one()
-                    # if found, but with different uid - we have a duplicate
+                    # if found, but with different uid - we have a duplicate.
+                    # these are the cases where Imenko Prezimenovic changes the
+                    # institution.
                     if u.feeduid != feeduid:
                         u_dup = User(feedid=user['id'],
                                      username=gen_username(feedname,
@@ -184,14 +190,14 @@ def main():
                              consent_disable=False,
                              projects='')
             if u_dup:
-                p.users.extend([u, u_dup])
+                projectdb.users.extend([u, u_dup])
             else:
-                p.users.extend([u])
+                projectdb.users.extend([u])
         if diff:
             for ud in diff:
                 u = session.query(User).filter(and_(User.name == ud[0], User.surname == ud[1])).one()
-                p.users.remove(u)
-        session.add(p)
+                projectdb.users.remove(u)
+        session.add(projectdb)
 
     session.commit()
 

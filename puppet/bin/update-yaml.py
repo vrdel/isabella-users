@@ -26,13 +26,10 @@ def avail_users(stream):
     return users
 
 
-def user_projects_db(yamlusers, skipusers, session):
+def user_projects_db(yamlusers, session):
     projects = list()
 
     for (key, value) in yamlusers.items():
-        if key in skipusers:
-            continue
-
         user_db = session.query(User).filter(User.username == key).one()
         all_projects = [project.idproj for project in user_db.projects_assign]
         projects.append(' '.join(all_projects).strip())
@@ -40,13 +37,10 @@ def user_projects_db(yamlusers, skipusers, session):
     return projects
 
 
-def user_projects_yaml(yamlusers, skipusers):
+def user_projects_yaml(yamlusers):
     projects = list()
 
     for (key, value) in yamlusers.items():
-        if key in skipusers:
-            continue
-
         project = value['comment'].split(',')
         if len(project) > 1:
             projects.append(project[1].strip())
@@ -143,6 +137,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="update Puppet YAML listing all users and projects' assignments in their comment field")
     parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
+    parser.add_argument('-n', required=False, help='No operation mode', dest='noaction', action='store_true')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     args = parser.parse_args()
@@ -161,17 +156,17 @@ def main():
     Session.configure(bind=engine)
     session = Session()
 
-    skipusers = conf_opts['settings']['excludeuser']
-    skipusers = set([user.strip() for user in skipusers.split(',')])
-
     users = session.query(User).all()
     maxuid = session.query(MaxUID).first()
     usersdb = set(user.username for user in users)
     newusers = usersdb.difference(yamlusers)
 
-    yamlprojects = user_projects_yaml(yusers['isabella_users'], skipusers)
-    dbprojects = user_projects_db(yusers['isabella_users'], skipusers, session)
+    yamlprojects = user_projects_yaml(yusers['isabella_users'])
+    dbprojects = user_projects_db(yusers['isabella_users'], session)
     projects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
+
+    if args.noaction:
+        logger.info("NO EXECUTE mode, just print actions")
 
     # trigger is new users that exist in the cache db, but are not
     # presented in yaml. since we're merging new users to existing ones
@@ -195,13 +190,13 @@ def main():
 
         allusers = merge_users(yusers['isabella_users'], newusersd)
         for user, metadata in allusers.items():
-            if user in skipusers:
-                continue
-
             try:
                 udb = session.query(User).filter(User.username == user).one()
                 all_projects = [project.idproj for project in udb.projects_assign]
-                prev_projects =  metadata['comment'].split(',')[1].strip()
+                try:
+                    prev_projects = metadata['comment'].split(',')[1].strip()
+                except IndexError:
+                    prev_projects = ''
                 if prev_projects != ' '.join(all_projects):
                     added_projects_users.append(udb.username)
                 metadata['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname,
@@ -224,10 +219,11 @@ def main():
             for project in projectschanged_db:
                 users = project.users
                 for user in users:
-                    if user.username in skipusers:
-                        continue
                     yaml_user = yusers['isabella_users'][user.username]
-                    yaml_projects = yaml_user['comment'].split(',')[1].strip()
+                    try:
+                        yaml_projects = yaml_user['comment'].split(',')[1].strip()
+                    except IndexError as exc:
+                        yaml_projects = ''
                     if yaml_projects != user.projects:
                         diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
                         added_projects_users.append((user.username, ' '.join(diff_project)))
@@ -259,22 +255,27 @@ def main():
     # disable users whose grace period is over and are therefore inactive
     disabled_users = list()
     for user, data in yusers['isabella_users'].items():
-        if user in skipusers:
-            continue
         try:
             udb = session.query(User).filter(User.username == user).one()
             if conf_opts['settings']['disableuser']:
                 if udb.status == 0 and data['shell'] != '/sbin/nologin':
                     data['shell'] = '/sbin/nologin'
+                    data['comment'] = '{0} {1},'.format(udb.name, udb.surname)
+                    udb.date_disabled = datetime.date.today()
                     disabled_users.append(udb.username)
+                    session.commit()
                 elif udb.status == 1:
                     data['shell'] = conf_opts['settings']['shell']
+            else:
+                if udb.status == 0 and data['shell'] != '/sbin/nologin':
+                    disabled_users.append(udb.username)
 
         except NoResultFound as e:
             logger.error('{1} {0}'.format(user, str(e)))
             continue
     if not disabled_users:
         logger.info("No users that needs to be disabled")
+
 
     # yaml changes needs to be written
     yaml_write_content = None
@@ -285,9 +286,12 @@ def main():
         elif projects_changed or disabled_users:
             yaml_write_content = yusers
 
-        # backup and write once whatever changes were
-        backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
-        yaml_written = write_yaml(conf_opts['external']['isabellausersyaml'], yaml_write_content, logger)
+        if args.noaction:
+            yaml_written = True
+        else:
+            # backup and write once whatever changes were
+            backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
+            yaml_written = write_yaml(conf_opts['external']['isabellausersyaml'], yaml_write_content, logger)
 
         if not yaml_written:
             logger.error("Error saving YAML changes")
@@ -310,9 +314,12 @@ def main():
                 logger.info("Update associations of existing users to projects: %s " %
                             ', '.join(['{0} sign off from {1}'.format(t[0], t[1]) for t in deleted_projects_users]))
 
+
         if disabled_users:
-            logger.info("Disabled %s users: %s" % (len(disabled_users), ', '.join(disabled_users)))
-            session.commit()
+            if conf_opts['settings']['disableuser']:
+                logger.info("Disabled %s users: %s" % (len(disabled_users), ', '.join(disabled_users)))
+            else:
+                logger.info("%s users that will be disabled: %s" % (len(disabled_users), ', '.join(disabled_users)))
 
 
 if __name__ == '__main__':

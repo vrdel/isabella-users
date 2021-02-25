@@ -23,6 +23,7 @@ def main():
     parser = argparse.ArgumentParser(description="warn users that they are not active anymore")
     parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
     parser.add_argument('-n', required=False, help='No operation mode', dest='noaction', action='store_true')
+    parser.add_argument('-t', required=False, help='Type of email template (warn, delete)', dest='emailtype', default='warn')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     args = parser.parse_args()
@@ -42,53 +43,41 @@ def main():
     if args.noaction:
         logger.info("NO EXECUTE mode, just print actions")
 
-    # take into account only users for which grace period is active
-    # send two emails for them - on the date_to of last active project
-    # and date_to + gracedays.
-    grace_users = session.query(User).filter(User.status == 2).all()
-    grace_stat, expire_stat = list(), list()
-    for user in grace_users:
+    disabled_users = session.query(User).filter(User.status == 0).all()
+    disabled_stat = list()
+    for user in disabled_users:
         if user.expire_email:
             continue
         dates = [project.date_to for project in user.projects_assign]
-        most_recent = max(dates)
-        last_project = [project for project in user.projects_assign
-                        if project.date_to == most_recent]
-        last_project = last_project[0]
-        if last_project.date_to == datetime.date.today():
+        if dates:
+            most_recent = max(dates)
+            last_project = [project for project in user.projects_assign
+                            if project.date_to == most_recent]
+            last_project = last_project[0]
             conf_ext = conf_opts['external']
-            email = EmailSend(conf_ext['emailtemplatewarn'],
-                              conf_ext['emailhtml'], conf_ext['emailsmtp'],
-                              conf_ext['emailfrom'], user.mail,
-                              last_project, gracedays, logger)
-            msg = f'Sent grace email for {user.username} {last_project.idproj} @ {user.mail}'
-            if args.noaction:
-                logger.info(msg)
-            elif email.send():
-                logger.info(msg)
-                grace_stat.append(user)
-        if last_project.date_to + gracedays == datetime.date.today():
-            conf_ext = conf_opts['external']
-            email = EmailSend(conf_ext['emailtemplatewarn'],
-                              conf_ext['emailhtml'], conf_ext['emailsmtp'],
-                              conf_ext['emailfrom'], user.mail,
-                              last_project, gracedays, logger)
+
+            if args.emailtype == 'warn':
+                email_template = conf_ext['emailtemplatewarn']
+            else:
+                email_template = conf_ext['emailtemplatedelete']
+
+            email = EmailSend(email_template, conf_ext['emailhtml'],
+                              conf_ext['emailsmtp'], conf_ext['emailfrom'],
+                              user.mail, last_project, gracedays, logger)
             msg = f'Sent expire email for {user.username} {last_project.idproj} @ {user.mail}'
             if args.noaction:
                 logger.info(msg)
+                disabled_stat.append(user)
             elif email.send():
                 logger.info(msg)
                 user.expire_email = True
-                expire_stat.append(user)
+                disabled_stat.append(user)
                 session.commit()
 
-    if not grace_stat and not expire_stat:
-        logger.info('No grace and expired users')
+    if not disabled_stat:
+        logger.info('No expired users')
     else:
-        if grace_stat:
-            logger.info('Sent emails for {len(grace_stat)} grace users')
-        if expire_stat:
-            logger.info('Sent emails for {len(expire_stat)} expired users')
+        logger.info(f'Sent emails for {len(disabled_stat)} expired users')
 
 
 if __name__ == '__main__':

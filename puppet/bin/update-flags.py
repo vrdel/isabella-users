@@ -103,14 +103,21 @@ def main():
     # period if he's neither active or inactive. if users responds to first
     # email saying that is ok to be removed, it will be marked on the API that
     # will reflect on consent_disable field and thus will be inactivated here.
+    # time and last active project will be recorded when disabling a user.
     # set also all current project assignments in the field projects as it will
-    # be checked on update-useryaml.py
+    # be checked on update-yaml.py .
     for user in session.query(User):
         proj_statuses = [project.status for project in user.projects_assign]
-        if all_false(proj_statuses) or user.consent_disable:
+        if user.consent_disable:
             user.status = 0
+            user.was_active_projects = user.projects
+            user.expire_email = True
+        elif all_false(proj_statuses):
+            user.status = 0
+            user.was_active_projects = user.projects
         elif any_active(proj_statuses):
             user.status = 1
+            user.expire_email = False
         else:
             user.status = 2
 
