@@ -137,6 +137,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="update Puppet YAML listing all users and projects' assignments in their comment field")
     parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
+    parser.add_argument('-n', required=False, help='No operation mode', dest='noaction', action='store_true')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     args = parser.parse_args()
@@ -163,6 +164,9 @@ def main():
     yamlprojects = user_projects_yaml(yusers['isabella_users'])
     dbprojects = user_projects_db(yusers['isabella_users'], session)
     projects_changed = user_projects_changed(yamlprojects, dbprojects, logger)
+
+    if args.noaction:
+        logger.info("NO EXECUTE mode, just print actions")
 
     # trigger is new users that exist in the cache db, but are not
     # presented in yaml. since we're merging new users to existing ones
@@ -267,6 +271,7 @@ def main():
     if not disabled_users:
         logger.info("No users that needs to be disabled")
 
+
     # yaml changes needs to be written
     yaml_write_content = None
     if newusers or projects_changed or disabled_users:
@@ -276,9 +281,12 @@ def main():
         elif projects_changed or disabled_users:
             yaml_write_content = yusers
 
-        # backup and write once whatever changes were
-        backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
-        yaml_written = write_yaml(conf_opts['external']['isabellausersyaml'], yaml_write_content, logger)
+        if args.noaction:
+            yaml_written = True
+        else:
+            # backup and write once whatever changes were
+            backup_yaml(conf_opts['external']['isabellausersyaml'], logger)
+            yaml_written = write_yaml(conf_opts['external']['isabellausersyaml'], yaml_write_content, logger)
 
         if not yaml_written:
             logger.error("Error saving YAML changes")
