@@ -99,7 +99,14 @@ def main():
 
     for projectfeed in data:
         # skip projects that have not been accepted yet or are HTC only
-        if int(projectfeed['status_id']) > 1 or int(projectfeed['htc']) > 1:
+        # XXX: 26-02-2021
+        # it was decided to pass through expired projects (status_id = 6) to
+        # have the consent_disable feature enabled.
+        # XXX: but new associations of existing users to expired projects will
+        # not be created as expired project will then become a new default one
+        # for them.
+        if (int(projectfeed['status_id']) not in [1, 6]
+            or int(projectfeed['htc']) not in [0, 1]):
             continue
         idproj = projectfeed['sifra']
         try:
@@ -182,7 +189,12 @@ def main():
                 except NoResultFound:
                     # user status is taken from the API only this time when we're
                     # registering new one in the cache.db. later on it's controlled and
-                    # set by the update-userdb.py
+                    # set by the update-userdb.py . it was decided later on
+                    # to enable syncing of outdated projects and for that one,
+                    # we'll pass on only users with status_id = 5 (agreed to
+                    # be removed)
+                    if int(projectfeed['status_id']) == 6 and int(user['status_id']) != 5:
+                        continue
                     u = User(feedid=user['id'], username=gen_username(feedname, feedsurname, allusernames),
                              name=feedname, surname=feedsurname, feeduid=feeduid, mail=feedemail,
                              date_join=datetime.now(),
@@ -192,6 +204,9 @@ def main():
             if u_dup:
                 projectdb.users.extend([u, u_dup])
             else:
+                # do not create new associations to expired projects
+                if projectdb.status != 1:
+                    continue
                 projectdb.users.extend([u])
         if diff:
             for ud in diff:
