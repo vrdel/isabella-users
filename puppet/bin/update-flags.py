@@ -121,6 +121,7 @@ def main():
         else:
             user.status = 2
 
+        # TODO: only active projects
         all_projects = [project.idproj for project in user.projects_assign]
         user.projects = ' '.join(all_projects)
 
