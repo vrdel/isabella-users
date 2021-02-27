@@ -58,6 +58,13 @@ def gen_username(name, surname, existusers):
         return username + str(len(match))
 
 
+def project_stat(data):
+    active = [project for project in data if project['status_id'] == 1]
+    expired = [project for project in data if project['status_id'] == 6]
+    denied = [project for project in data if project['status_id'] == 4]
+    return (len(active), len(expired), len(denied))
+
+
 def concat(s):
     if '-' in s:
         s = s.split('-')
@@ -83,7 +90,7 @@ def main():
 
     data = fetch_feeddata(conf_opts['external']['subscription'], logger)
 
-    logger.info('Fetched %d projects' % len(data))
+    logger.info('Fetched %d projects: %s' % (len(data), project_stat(data)))
 
     with open(conf_opts['settings']['mapuser'], mode='r') as fp:
         mapuser = json.loads(fp.read())
@@ -148,12 +155,21 @@ def main():
             feedsurname = concat(unidecode(user['prezime']))
             feeduid = user['uid']
             feedemail = user['mail']
+            pass_dup = False
             for mu in mapuser:
-                munc = concat(unidecode(mu['from']['name']))
-                musc = concat(unidecode(mu['from']['surname']))
-                if feedname == munc and feedsurname == musc:
-                    feedname = concat(mu['to']['name'])
-                    feedsurname = concat(mu['to']['surname'])
+                if mu['from'].get('name', False):
+                    munc = concat(unidecode(mu['from']['name']))
+                    musc = concat(unidecode(mu['from']['surname']))
+                    if feedname == munc and feedsurname == musc:
+                        feedname = concat(mu['to']['name'])
+                        feedsurname = concat(mu['to']['surname'])
+                elif mu['from'].get('uid', False):
+                    if feeduid == mu['from']['uid']:
+                        touid = mu['to']['uid']
+                        if touid != 'pass':
+                            feeduid = touid
+                        else:
+                            pass_dup = True
 
             # lookup first by uid
             try:
@@ -173,7 +189,11 @@ def main():
                     # if found, but with different uid - we have a duplicate.
                     # these are the cases where Imenko Prezimenovic changes the
                     # institution.
-                    if u.feeduid != feeduid:
+                    if u.feeduid != feeduid and not pass_dup:
+                        logger.error(f'Found duplicate - database: ({u.name}, {u.surname}, {u.feeduid}), API: ({feedname}, {feedsurname}, {feeduid})')
+                        logger.error(f'Manual action needed, please update mappings in users.json deciding whether the user is a new or existing one.')
+                        raise SystemExit(1)
+                    elif u.feeduid != feeduid and pass_dup:
                         u_dup = User(feedid=user['id'],
                                      username=gen_username(feedname,
                                                            feedsurname,
@@ -201,13 +221,14 @@ def main():
                              status=int(user['status_id']),
                              consent_disable=False,
                              projects='')
-            if u_dup:
-                projectdb.users.extend([u, u_dup])
-            else:
+
                 # do not create new associations to expired projects
-                if projectdb.status != 1:
-                    continue
-                projectdb.users.extend([u])
+                if u_dup:
+                    projectdb.users.extend([u_dup])
+                else:
+                    if projectdb.status != 1:
+                        continue
+                    projectdb.users.extend([u])
         if diff:
             for ud in diff:
                 u = session.query(User).filter(and_(User.name == ud[0], User.surname == ud[1])).one()
