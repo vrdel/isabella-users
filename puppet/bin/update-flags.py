@@ -122,8 +122,11 @@ def main():
             user.status = 2
 
         # TODO: only active projects
-        all_projects = [project.idproj for project in user.projects_assign]
-        user.projects = ' '.join(all_projects)
+        all_projects = [project.idproj for project in user.projects_assign if project.status == 1]
+        if all_projects:
+            user.projects = ' '.join(all_projects)
+        else:
+            user.projects = ''
 
     session.commit()
 
