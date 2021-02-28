@@ -199,8 +199,11 @@ def main():
                     prev_projects = ''
                 if prev_projects != ' '.join(all_projects):
                     added_projects_users.append(udb.username)
-                metadata['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname,
-                                                     udb.projects)
+                if udb.projects:
+                    metadata['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname,
+                                                        udb.projects)
+                else:
+                    metadata['comment'] = '{0} {1},'.format(udb.name, udb.surname)
 
             except NoResultFound as e:
                 logger.error('{1} {0}'.format(user, str(e)))
@@ -227,7 +230,10 @@ def main():
                     if yaml_projects != user.projects:
                         diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
                         added_projects_users.append((user.username, ' '.join(diff_project)))
-                        yaml_user['comment'] = '{0} {1}, {2}'.format(user.name, user.surname, user.projects)
+                        if user.projects:
+                            yaml_user['comment'] = '{0} {1}, {2}'.format(user.name, user.surname, user.projects)
+                        else:
+                            yaml_user['comment'] = '{0} {1},'.format(user.name, user.surname)
 
         except NoResultFound as e:
             logger.error('{1} {0}'.format(user, str(e)))
