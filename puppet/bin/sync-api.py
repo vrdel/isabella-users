@@ -90,7 +90,8 @@ def main():
 
     data = fetch_feeddata(conf_opts['external']['subscription'], logger)
 
-    logger.info('Fetched %d projects: %s' % (len(data), project_stat(data)))
+    stat = project_stat(data)
+    logger.info(f'Fetched {len(data)} projects: active={stat[0]} expired={stat[1]} denied={stat[2]}')
 
     with open(conf_opts['settings']['mapuser'], mode='r') as fp:
         mapuser = json.loads(fp.read())
