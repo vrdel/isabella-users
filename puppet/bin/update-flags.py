@@ -66,6 +66,8 @@ def main():
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     args = parser.parse_args()
+    project_stat = dict(expired=0, grace=0, active=0)
+    users_stat = dict(disabled=0, grace=0, active=0)
 
     cachedb = conf_opts['settings']['cache']
     gracedays = datetime.timedelta(days=conf_opts['settings']['gracedays'])
@@ -92,11 +94,14 @@ def main():
     for project in session.query(Projects):
         if project.date_to + gracedays < datenow:
             project.status = 0
+            project_stat['expired'] += 1
         elif (project.date_to + gracedays >= datenow
               and project.date_to <= datenow):
             project.status = 2
+            project_stat['grace'] += 1
         else:
             project.status = 1
+            project_stat['active'] += 1
 
     # conclude if user is active or not. user is active only if he's assigned
     # to at least one active project (set previously). he's in mercy grace
@@ -110,18 +115,26 @@ def main():
         proj_statuses = [project.status for project in user.projects_assign]
         if user.consent_disable:
             user.status = 0
-            user.was_active_projects = user.projects
+            if user.projects:
+                user.was_active_projects = user.projects
             user.expire_email = True
+            users_stat['disabled'] += 1
         elif all_false(proj_statuses):
             user.status = 0
-            user.was_active_projects = user.projects
+            # ensure was_active_projects is set only once as on the second
+            # run projects will be set to empty string
+            if user.projects:
+                user.was_active_projects = user.projects
+            users_stat['disabled'] += 1
         elif any_active(proj_statuses):
             user.status = 1
             user.expire_email = False
+            users_stat['active'] += 1
         else:
             user.status = 2
+            users_stat['grace'] += 1
 
-        # TODO: only active projects
+        # records only active project associations
         all_projects = [project.idproj for project in user.projects_assign if project.status == 1]
         if all_projects:
             user.projects = ' '.join(all_projects)
@@ -129,6 +142,8 @@ def main():
             user.projects = ''
 
     session.commit()
+    logger.info(f"Projects: active={project_stat['active']} grace={project_stat['grace']} expired={project_stat['expired']}")
+    logger.info(f"Users: active={users_stat['active']} grace={users_stat['grace']} disabled={users_stat['disabled']}")
 
 
 if __name__ == '__main__':
