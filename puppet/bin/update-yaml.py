@@ -27,17 +27,25 @@ def avail_users(stream):
 
 
 def user_projects_db(yamlusers, session):
+    """
+        Build list of active projects from cache for users listed in yaml in
+        same order as they are listed there.
+    """
     projects = list()
 
     for (key, value) in yamlusers.items():
         user_db = session.query(User).filter(User.username == key).one()
-        all_projects = [project.idproj for project in user_db.projects_assign]
+        all_projects = [project.idproj for project in user_db.projects_assign if project.status == 1]
         projects.append(' '.join(all_projects).strip())
 
     return projects
 
 
 def user_projects_yaml(yamlusers):
+    """
+        Build list of active projects for users in yaml in same order as they
+        are listed there.
+    """
     projects = list()
 
     for (key, value) in yamlusers.items():
@@ -51,6 +59,10 @@ def user_projects_yaml(yamlusers):
 
 
 def user_projects_changed(yaml, db, logger):
+    """
+        Find the differencies in same ordered lists of projects for users in
+        cache and yaml
+    """
     changed = list()
     diff = set()
 
@@ -200,10 +212,12 @@ def main():
                 if prev_projects != ' '.join(all_projects):
                     added_projects_users.append(udb.username)
                 if udb.projects:
-                    metadata['comment'] = '{0} {1}, {2}'.format(udb.name, udb.surname,
-                                                        udb.projects)
+                    metadata['comment'] = '{0} {1}, {2}'.format(udb.name,
+                                                                udb.surname,
+                                                                udb.projects)
                 else:
-                    metadata['comment'] = '{0} {1},'.format(udb.name, udb.surname)
+                    metadata['comment'] = '{0} {1},'.format(udb.name,
+                                                            udb.surname)
 
             except NoResultFound as e:
                 logger.error('{1} {0}'.format(user, str(e)))
@@ -231,9 +245,12 @@ def main():
                         diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
                         added_projects_users.append((user.username, ' '.join(diff_project)))
                         if user.projects:
-                            yaml_user['comment'] = '{0} {1}, {2}'.format(user.name, user.surname, user.projects)
+                            yaml_user['comment'] = '{0} {1}, {2}'.format(user.name,
+                                                                         user.surname,
+                                                                         user.projects)
                         else:
-                            yaml_user['comment'] = '{0} {1},'.format(user.name, user.surname)
+                            yaml_user['comment'] = '{0} {1},'.format(user.name,
+                                                                     user.surname)
 
         except NoResultFound as e:
             logger.error('{1} {0}'.format(user, str(e)))
@@ -251,9 +268,12 @@ def main():
                         diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
                         deleted_projects_users.append((user.username, ' '.join(diff_project)))
                         if user.projects:
-                            yaml_user['comment'] = '{0} {1}, {2}'.format(user.name, user.surname, user.projects)
+                            yaml_user['comment'] = '{0} {1}, {2}'.format(user.name,
+                                                                         user.surname,
+                                                                         user.projects)
                         else:
-                            yaml_user['comment'] = '{0} {1},'.format(user.name, user.surname)
+                            yaml_user['comment'] = '{0} {1},'.format(user.name,
+                                                                     user.surname)
 
     else:
         logger.info("No changes in projects and users associations")
