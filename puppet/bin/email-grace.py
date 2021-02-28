@@ -86,9 +86,9 @@ def main():
         logger.info('No grace and expired users')
     else:
         if grace_stat:
-            logger.info('Sent emails for {len(grace_stat)} grace users')
+            logger.info(f'Sent emails for {len(grace_stat)} grace users')
         if expire_stat:
-            logger.info('Sent emails for {len(expire_stat)} expired users')
+            logger.info(f'Sent emails for {len(expire_stat)} expired users')
 
 
 if __name__ == '__main__':
