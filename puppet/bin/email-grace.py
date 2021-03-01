@@ -69,7 +69,7 @@ def main():
                 grace_stat.append(user)
         if last_project.date_to + gracedays == datetime.date.today():
             conf_ext = conf_opts['external']
-            email = EmailSend(conf_ext['emailtemplatewarn'],
+            email = EmailSend(conf_ext['emailtemplatedelete'],
                               conf_ext['emailhtml'], conf_ext['emailsmtp'],
                               conf_ext['emailfrom'], user.mail,
                               last_project, gracedays, logger)
@@ -86,9 +86,9 @@ def main():
         logger.info('No grace and expired users')
     else:
         if grace_stat:
-            logger.info('Sent emails for {len(grace_stat)} grace users')
+            logger.info(f'Sent emails for {len(grace_stat)} grace users')
         if expire_stat:
-            logger.info('Sent emails for {len(expire_stat)} expired users')
+            logger.info(f'Sent emails for {len(expire_stat)} expired users')
 
 
 if __name__ == '__main__':

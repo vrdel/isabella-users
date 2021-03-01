@@ -58,6 +58,13 @@ def gen_username(name, surname, existusers):
         return username + str(len(match))
 
 
+def project_stat(data):
+    active = [project for project in data if project['status_id'] == 1]
+    expired = [project for project in data if project['status_id'] == 6]
+    denied = [project for project in data if project['status_id'] == 4]
+    return (len(active), len(expired), len(denied))
+
+
 def concat(s):
     if '-' in s:
         s = s.split('-')
@@ -83,7 +90,8 @@ def main():
 
     data = fetch_feeddata(conf_opts['external']['subscription'], logger)
 
-    logger.info('Fetched %d projects' % len(data))
+    stat = project_stat(data)
+    logger.info(f'Fetched {len(data)} projects: active={stat[0]} expired={stat[1]} denied={stat[2]}')
 
     with open(conf_opts['settings']['mapuser'], mode='r') as fp:
         mapuser = json.loads(fp.read())
@@ -99,7 +107,14 @@ def main():
 
     for projectfeed in data:
         # skip projects that have not been accepted yet or are HTC only
-        if int(projectfeed['status_id']) > 1 or int(projectfeed['htc']) > 1:
+        # XXX: 26-02-2021
+        # it was decided to pass through expired projects (status_id = 6) to
+        # have the consent_disable feature enabled.
+        # XXX: but new associations of existing users to expired projects will
+        # not be created as expired project will then become a new default one
+        # for them.
+        if (int(projectfeed['status_id']) not in [1, 6]
+            or int(projectfeed['htc']) not in [0, 1]):
             continue
         idproj = projectfeed['sifra']
         try:
@@ -141,12 +156,21 @@ def main():
             feedsurname = concat(unidecode(user['prezime']))
             feeduid = user['uid']
             feedemail = user['mail']
+            pass_dup = False
             for mu in mapuser:
-                munc = concat(unidecode(mu['from']['name']))
-                musc = concat(unidecode(mu['from']['surname']))
-                if feedname == munc and feedsurname == musc:
-                    feedname = concat(mu['to']['name'])
-                    feedsurname = concat(mu['to']['surname'])
+                if mu['from'].get('name', False):
+                    munc = concat(unidecode(mu['from']['name']))
+                    musc = concat(unidecode(mu['from']['surname']))
+                    if feedname == munc and feedsurname == musc:
+                        feedname = concat(mu['to']['name'])
+                        feedsurname = concat(mu['to']['surname'])
+                elif mu['from'].get('uid', False):
+                    if feeduid == mu['from']['uid']:
+                        touid = mu['to']['uid']
+                        if touid != 'pass':
+                            feeduid = touid
+                        else:
+                            pass_dup = True
 
             # lookup first by uid
             try:
@@ -166,7 +190,11 @@ def main():
                     # if found, but with different uid - we have a duplicate.
                     # these are the cases where Imenko Prezimenovic changes the
                     # institution.
-                    if u.feeduid != feeduid:
+                    if u.feeduid != feeduid and not pass_dup:
+                        logger.error(f'Found duplicate - local cache: ({u.name}, {u.surname}, {u.feeduid}), API: ({feedname}, {feedsurname}, {feeduid})')
+                        logger.error(f'Manual action needed, please update mappings in users.json deciding whether the user is a new or existing one.')
+                        raise SystemExit(1)
+                    elif u.feeduid != feeduid and pass_dup:
                         u_dup = User(feedid=user['id'],
                                      username=gen_username(feedname,
                                                            feedsurname,
@@ -182,16 +210,25 @@ def main():
                 except NoResultFound:
                     # user status is taken from the API only this time when we're
                     # registering new one in the cache.db. later on it's controlled and
-                    # set by the update-userdb.py
+                    # set by the update-userdb.py . it was decided later on
+                    # to enable syncing of outdated projects and for that one,
+                    # we'll pass on only users with status_id = 5 (agreed to
+                    # be removed)
+                    if int(projectfeed['status_id']) == 6 and int(user['status_id']) != 5:
+                        continue
                     u = User(feedid=user['id'], username=gen_username(feedname, feedsurname, allusernames),
                              name=feedname, surname=feedsurname, feeduid=feeduid, mail=feedemail,
                              date_join=datetime.now(),
                              status=int(user['status_id']),
                              consent_disable=False,
                              projects='')
+
+            # do not create new associations to expired projects
             if u_dup:
-                projectdb.users.extend([u, u_dup])
+                projectdb.users.extend([u_dup])
             else:
+                if projectdb.status != 1:
+                    continue
                 projectdb.users.extend([u])
         if diff:
             for ud in diff:

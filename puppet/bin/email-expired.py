@@ -70,7 +70,8 @@ def main():
                 disabled_stat.append(user)
             elif email.send():
                 logger.info(msg)
-                user.expire_email = True
+                if args.emailtype == 'delete':
+                    user.expire_email = True
                 disabled_stat.append(user)
                 session.commit()
 
