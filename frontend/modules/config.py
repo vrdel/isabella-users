@@ -57,6 +57,15 @@ def parse_config(logger=None):
                             sys.stderr.write('%s does not exist\n' % confopts['settings']['sgecreateuser'])
                         raise SystemExit(1)
 
+                    sgeremoveuser = config.get(section, 'sgeremoveuser')
+                    confopts['settings'].update({'sgeremoveuser': sgeremoveuser})
+                    if not os.path.exists(confopts['settings']['skeletonpath']):
+                        if logger:
+                            logger.error('%s does not exist' % confopts['settings']['sgeremoveuser'])
+                        else:
+                            sys.stderr.write('%s does not exist\n' % confopts['settings']['sgeremoveuser'])
+                        raise SystemExit(1)
+
                     cache = config.get(section, 'cache')
                     confopts['settings'].update({'cache': cache})
                     if not os.path.exists(confopts['settings']['cache']):
