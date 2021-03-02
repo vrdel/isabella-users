@@ -193,7 +193,7 @@ def main():
                     if u.feeduid != feeduid and not pass_dup:
                         logger.error(f'Found duplicate - local cache: ({u.name}, {u.surname}, {u.feeduid}), API: ({feedname}, {feedsurname}, {feeduid})')
                         logger.error(f'Manual action needed, please update mappings in users.json deciding whether the user is a new or existing one.')
-                        raise SystemExit(1)
+                        continue
                     elif u.feeduid != feeduid and pass_dup:
                         u_dup = User(feedid=user['id'],
                                      username=gen_username(feedname,
