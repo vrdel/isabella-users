@@ -306,6 +306,7 @@ def main():
     not_email = session.query(User).filter(User.issentemail == False).all()
     for u in not_email:
         templatepath = conf_opts['external']['emailtemplate']
+        templatehtml = conf_opts['external']['emailhtml']
         smtpserver = conf_opts['external']['emailsmtp']
         emailfrom = conf_opts['external']['emailfrom']
         emailto = extract_email(projects, u.name, u.surname, u.last_projects, logger)
