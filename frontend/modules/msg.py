@@ -38,14 +38,6 @@ class InfoAccOpen(object):
         multipart_email['Subject'] = Header(self.subject, 'utf-8')
         # remove subject in first two lines of the template
         text.pop(0); text.pop(0)
-
-        multipart_email = MIMEMultipart('alternative')
-        multipart_email['From'] = self.emailfrom
-        multipart_email['Cc'] = self.emailfrom
-        multipart_email['To'] = self.emailto
-        multipart_email['Subject'] = Header(self.subject, 'utf-8')
-        # remove subject in first two lines of the template
-        text.pop(0); text.pop(0)
         text = ''.join(text)
         text = text.replace('__USERNAME__', str(self.username))
         text = text.replace('__PASSWORD__', str(self.password))
