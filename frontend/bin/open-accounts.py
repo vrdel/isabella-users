@@ -170,7 +170,7 @@ def diff_projects(old, new):
     if len(projects_new) > len(projects_old):
         tmp = projects_new.difference(projects_old)
         diff['add'] = ' '.join(tmp)
-    elif len(projects_old) < len(projects_new):
+    elif len(projects_new) < len(projects_old):
         tmp = projects_old.difference(projects_new)
         diff['rem'] = ' '.join(tmp)
     else:
