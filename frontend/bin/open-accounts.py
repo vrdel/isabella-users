@@ -134,22 +134,29 @@ def extract_email(projects, name, surname, last_project, logger):
     # last_project is multi project field now. pick last one, but any will
     # actually play as we're just grabbing email from the API feed.
     if projects:
-        target_project = last_project.split()[-1]
+        try:
+            target_project = last_project.split()[-1]
 
-        for p in projects:
-            if target_project == p['sifra']:
-                users = p['users']
-                for u in users:
-                    if (name == concat(unidecode(u['ime'])) and
-                        surname == concat(unidecode(u['prezime']))):
-                        email = u['mail']
-        if email:
-            return email
-        else:
-            logger.error('Failed grabbing an email for %s %s from the API' % (name, surname))
+            for p in projects:
+                if target_project == p['sifra']:
+                    users = p['users']
+                    for u in users:
+                        if (name == concat(unidecode(u['ime'])) and
+                            surname == concat(unidecode(u['prezime']))):
+                            email = u['mail']
+            if email:
+                return email
+
+            else:
+                logger.error('Failed grabbing an email for %s %s from the API' % (name, surname))
+
+        except IndexError as exc:
+            logger.error('Failed grabbing an project for %s %s from the API' % (name, surname))
+
     else:
         logger.error('Failed grabbing an email for %s %s from the API as project is unknown' % (name, surname))
-        return None
+
+    return None
 
 
 def diff_projects(old, new):
@@ -258,10 +265,17 @@ def main():
                     logger.error('Failed updating user %s to SGE: %s' % (u.username, str(e)))
 
         if diff['rem']:
-            # only leave the message in logs for now
-            # TODO: support for deletion of user from SGE projects
             for project in diff['rem'].split():
                 logger.info('User %s sign off from SGE project %s' % (u.username, project.strip()))
+                sgeremoveuser_cmd = conf_opts['settings']['sgeremoveuser']
+                try:
+                    os.chdir(os.path.dirname(sgeremoveuser_cmd))
+                    subprocess.check_call('{0} {1} {2}'.format(sgeremoveuser_cmd, u.username, project.strip()),
+                                          shell=True, bufsize=512)
+                    logger.info('User %s removed from SGE project ACL %s' % (u.username, project.strip()))
+
+                except Exception as e:
+                    logger.error('Failed removing of user %s from SGE: %s' % (u.username, str(e)))
 
         # this one is called to explicitly set SGE default_project to user's
         # last_project assigned
@@ -292,14 +306,14 @@ def main():
     not_email = session.query(User).filter(User.issentemail == False).all()
     for u in not_email:
         templatepath = conf_opts['external']['emailtemplate']
+        templatehtml = conf_opts['external']['emailhtml']
         smtpserver = conf_opts['external']['emailsmtp']
         emailfrom = conf_opts['external']['emailfrom']
-        emailsubject = conf_opts['external']['emailsubject']
-        email = extract_email(projects, u.name, u.surname, u.last_projects, logger)
-        u.email = email
+        emailto = extract_email(projects, u.name, u.surname, u.last_projects, logger)
+        u.email = emailto
 
-        e = InfoAccOpen(u.username, u.password, templatepath, smtpserver,
-                        emailfrom, email, emailsubject, logger)
+        e = InfoAccOpen(templatepath, templatehtml, smtpserver, emailfrom,
+                        emailto, u.username, u.password, logger)
         r = e.send()
         if r:
             u.issentemail = True

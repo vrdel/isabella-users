@@ -19,8 +19,8 @@ def parse_config(logger=None):
                     confopts['external'].update({'mailinglistcredentials': config.get(section, 'mailinglistcredentials')})
                     confopts['external'].update({'mailinglistname': config.get(section, 'mailinglistname')})
                     confopts['external'].update({'emailfrom': config.get(section, 'emailfrom')})
-                    confopts['external'].update({'emailsubject': config.get(section, 'emailsubject')})
                     confopts['external'].update({'emailsmtp': config.get(section, 'emailsmtp')})
+                    confopts['external'].update({'emailhtml': config.get(section, 'emailhtml')})
                     confopts['external'].update({'emailtemplate': config.get(section, 'emailtemplate')})
                     if not os.path.exists(confopts['external']['emailtemplate']):
                         if logger:
@@ -55,6 +55,15 @@ def parse_config(logger=None):
                             logger.error('%s does not exist' % confopts['settings']['sgecreateuser'])
                         else:
                             sys.stderr.write('%s does not exist\n' % confopts['settings']['sgecreateuser'])
+                        raise SystemExit(1)
+
+                    sgeremoveuser = config.get(section, 'sgeremoveuser')
+                    confopts['settings'].update({'sgeremoveuser': sgeremoveuser})
+                    if not os.path.exists(confopts['settings']['skeletonpath']):
+                        if logger:
+                            logger.error('%s does not exist' % confopts['settings']['sgeremoveuser'])
+                        else:
+                            sys.stderr.write('%s does not exist\n' % confopts['settings']['sgeremoveuser'])
                         raise SystemExit(1)
 
                     cache = config.get(section, 'cache')

@@ -6,8 +6,8 @@
 %define mydist %{dist}
 
 Name:           isabella-users-puppet
-Version:        0.1.10
-Release:        3%{?mydist}.srce
+Version:        0.1.11
+Release:        4%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
 License:        GPL
@@ -55,6 +55,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Tue Mar  2 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.11-4%{?dist}
+- only active projects in yaml comment
+- manual action needed for users with duplicate name and surname
+- pass expired projects also
+- some stats on all tools
 * Thu Feb 25 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.10-3%{?dist}
 - send emails for expired users taking into account grace period
 * Wed Feb 17 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.9-1%{?dist}
