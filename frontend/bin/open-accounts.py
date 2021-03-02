@@ -163,7 +163,7 @@ def diff_projects(old, new):
     projects_old = set(old.split())
     projects_new = set(new.split())
     if projects_new:
-        diff = dict(add='', rem='', last=new.split()[len(projects_new) - 1])
+        diff = dict(add='', rem='', last=new.split()[-1])
     else:
         diff = dict(add='', rem='', last='')
 
@@ -252,18 +252,6 @@ def main():
     for u in update_sge:
         diff = diff_projects(u.projects, u.last_projects)
 
-        if diff['add']:
-            for project in diff['add'].split():
-                sgecreateuser_cmd = conf_opts['settings']['sgecreateuser']
-                try:
-                    os.chdir(os.path.dirname(sgecreateuser_cmd))
-                    subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, u.username, project.strip()),
-                                        shell=True, bufsize=512)
-                    logger.info('User %s updated to SGE project %s' % (u.username, project.strip()))
-
-                except Exception as e:
-                    logger.error('Failed updating user %s to SGE: %s' % (u.username, str(e)))
-
         if diff['rem']:
             for project in diff['rem'].split():
                 logger.info('User %s sign off from SGE project %s' % (u.username, project.strip()))
@@ -276,6 +264,18 @@ def main():
 
                 except Exception as e:
                     logger.error('Failed removing of user %s from SGE: %s' % (u.username, str(e)))
+
+        if diff['add']:
+            for project in diff['add'].split():
+                sgecreateuser_cmd = conf_opts['settings']['sgecreateuser']
+                try:
+                    os.chdir(os.path.dirname(sgecreateuser_cmd))
+                    subprocess.check_call('{0} {1} {2}'.format(sgecreateuser_cmd, u.username, project.strip()),
+                                        shell=True, bufsize=512)
+                    logger.info('User %s updated to SGE project %s' % (u.username, project.strip()))
+
+                except Exception as e:
+                    logger.error('Failed updating user %s to SGE: %s' % (u.username, str(e)))
 
         # this one is called to explicitly set SGE default_project to user's
         # last_project assigned
