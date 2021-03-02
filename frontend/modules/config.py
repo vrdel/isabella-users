@@ -19,8 +19,8 @@ def parse_config(logger=None):
                     confopts['external'].update({'mailinglistcredentials': config.get(section, 'mailinglistcredentials')})
                     confopts['external'].update({'mailinglistname': config.get(section, 'mailinglistname')})
                     confopts['external'].update({'emailfrom': config.get(section, 'emailfrom')})
-                    confopts['external'].update({'emailsubject': config.get(section, 'emailsubject')})
                     confopts['external'].update({'emailsmtp': config.get(section, 'emailsmtp')})
+                    confopts['external'].update({'emailhtml': config.get(section, 'emailhtml')})
                     confopts['external'].update({'emailtemplate': config.get(section, 'emailtemplate')})
                     if not os.path.exists(confopts['external']['emailtemplate']):
                         if logger:
