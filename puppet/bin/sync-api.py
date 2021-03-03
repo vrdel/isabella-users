@@ -232,8 +232,11 @@ def main():
                 projectdb.users.extend([u])
         if diff:
             for ud in diff:
-                u = session.query(User).filter(and_(User.name == ud[0], User.surname == ud[1])).one()
-                projectdb.users.remove(u)
+                try:
+                    u = session.query(User).filter(and_(User.name == ud[0], User.surname == ud[1])).one()
+                    projectdb.users.remove(u)
+                except NoResultFound:
+                    logger.error(f'No user {ud[0]} {ud[1]} found in local cache')
         session.add(projectdb)
 
     session.commit()
