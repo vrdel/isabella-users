@@ -35,7 +35,8 @@ def user_projects_db(yamlusers, session):
 
     for (key, value) in yamlusers.items():
         user_db = session.query(User).filter(User.username == key).one()
-        all_projects = [project.idproj for project in user_db.projects_assign if project.status == 1]
+        all_projects = [project.idproj for project in user_db.projects_assign
+                        if project.status == 1 or project.status == 2]
         projects.append(' '.join(all_projects).strip())
 
     return projects
