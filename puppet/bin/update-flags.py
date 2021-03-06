@@ -62,7 +62,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="set user's and project's status flags based on the interested date and state in cache.db . reflect user's project assignments in appropriate field.")
     parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
-    parser.add_argument('-t', required=False, help='YYY-MM-DD', type=is_date, dest='date')
+    parser.add_argument('-t', required=False, help='YYYY-MM-DD', type=is_date, dest='date')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     args = parser.parse_args()

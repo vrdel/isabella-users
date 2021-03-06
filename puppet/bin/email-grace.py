@@ -16,6 +16,22 @@ import sys
 conf_opts = parse_config()
 
 
+def is_date(date):
+    """
+        Enforce specific date format on argument
+    """
+    try:
+        _ = datetime.datetime.strptime(date, '%Y-%m-%d')
+        t = tuple(int(i) for i in date.split('-'))
+
+        return datetime.date(*t)
+
+    except ValueError:
+        print('Date not in %Y-%m-%d format')
+
+        raise SystemExit(1)
+
+
 def main():
     lobj = Logger(sys.argv[0])
     logger = lobj.get()
@@ -23,6 +39,7 @@ def main():
     parser = argparse.ArgumentParser(description="warn users that they are not active anymore")
     parser.add_argument('-d', required=False, help='SQLite DB file', dest='sql')
     parser.add_argument('-n', required=False, help='No operation mode', dest='noaction', action='store_true')
+    parser.add_argument('-t', required=False, help='YYYY-MM-DD', type=is_date, dest='date')
     parser.add_argument('-v', required=False, default=False,
                         action='store_true', help='Verbose', dest='verbose')
     args = parser.parse_args()
@@ -32,6 +49,11 @@ def main():
 
     if args.sql:
         cachedb = args.sql
+
+    if args.date:
+        datenow = args.date
+    else:
+        datenow = datetime.date.today()
 
     engine = create_engine('sqlite:///%s' % cachedb, echo=args.verbose)
 
@@ -55,7 +77,7 @@ def main():
         last_project = [project for project in user.projects_assign
                         if project.date_to == most_recent]
         last_project = last_project[0]
-        if last_project.date_to == datetime.date.today():
+        if last_project.date_to == datenow:
             conf_ext = conf_opts['external']
             email = EmailSend(conf_ext['emailtemplatewarn'],
                               conf_ext['emailhtml'], conf_ext['emailsmtp'],
@@ -67,7 +89,7 @@ def main():
             elif email.send():
                 logger.info(msg)
                 grace_stat.append(user)
-        if last_project.date_to + gracedays == datetime.date.today():
+        if last_project.date_to + gracedays == datenow:
             conf_ext = conf_opts['external']
             email = EmailSend(conf_ext['emailtemplatedelete'],
                               conf_ext['emailhtml'], conf_ext['emailsmtp'],
