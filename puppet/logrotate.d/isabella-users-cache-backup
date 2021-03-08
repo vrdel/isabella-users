@@ -1,0 +1,7 @@
+/var/lib/isabella-users-puppet/cache.db {
+    rotate 7
+    compress
+    daily
+    copy
+    olddir /var/lib/isabella-users-puppet/backup/
+}
