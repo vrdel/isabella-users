@@ -36,7 +36,7 @@ def user_projects_db(yamlusers, session):
     for (key, value) in yamlusers.items():
         user_db = session.query(User).filter(User.username == key).one()
         all_projects = [project.idproj for project in user_db.projects_assign
-                        if project.status == 1 or project.status == 2]
+                        if project.status in [1,2]]
         projects.append(' '.join(all_projects).strip())
 
     return projects
@@ -205,7 +205,8 @@ def main():
         for user, metadata in allusers.items():
             try:
                 udb = session.query(User).filter(User.username == user).one()
-                all_projects = [project.idproj for project in udb.projects_assign]
+                all_projects = [project.idproj for project in
+                                udb.projects_assign if project.status in [1,2]]
                 try:
                     prev_projects = metadata['comment'].split(',')[1].strip()
                 except IndexError:

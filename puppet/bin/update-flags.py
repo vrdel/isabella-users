@@ -136,7 +136,7 @@ def main():
 
         # records only active project associations
         all_projects = [project.idproj for project in user.projects_assign if
-                        project.status == 1 or project.status == 2]
+                        project.status in [1,2]]
         if all_projects:
             user.projects = ' '.join(all_projects)
         else:
