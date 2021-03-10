@@ -290,15 +290,14 @@ def main():
     for user, data in yusers['isabella_users'].items():
         try:
             udb = session.query(User).filter(User.username == user).one()
-            if conf_opts['settings']['disableuser']:
-                if udb.status == 0 and data['shell'] != '/sbin/nologin':
-                    data['shell'] = '/sbin/nologin'
-                    data['comment'] = '{0} {1},'.format(udb.name, udb.surname)
-                    udb.date_disabled = datetime.date.today()
-                    disabled_users.append(udb.username)
-                    session.commit()
-                elif udb.status == 1:
-                    data['shell'] = conf_opts['settings']['shell']
+            if (conf_opts['settings']['disableuser']
+                and udb.status == 0
+                and data['shell'] != '/sbin/nologin'):
+                data['shell'] = '/sbin/nologin'
+                data['comment'] = '{0} {1},'.format(udb.name, udb.surname)
+                udb.date_disabled = datetime.date.today()
+                disabled_users.append(udb.username)
+                session.commit()
             else:
                 if udb.status == 0 and data['shell'] != '/sbin/nologin':
                     disabled_users.append(udb.username)
