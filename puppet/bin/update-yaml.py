@@ -250,6 +250,11 @@ def main():
                             yaml_user['comment'] = '{0} {1}, {2}'.format(user.name,
                                                                          user.surname,
                                                                          user.projects)
+                            # if user was previously disabled, he'll have
+                            # nologin set. this will ensure working shell
+                            # once he's back and active with new project
+                            if yaml_user['shell'] == '/sbin/nologin':
+                                yaml_user['shell'] = conf_opts['settings']['shell']
                         else:
                             yaml_user['comment'] = '{0} {1},'.format(user.name,
                                                                      user.surname)
