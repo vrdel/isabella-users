@@ -13,7 +13,7 @@ from isabella_users_frontend.userutils import UserUtils
 from isabella_users_frontend.log import Logger
 from isabella_users_frontend.config import parse_config
 from isabella_users_frontend.msg import InfoAccOpen
-from isabella_users_frontend.helpers import fetch_projects, fetch_users, extract_email
+from isabella_users_frontend.helpers import fetch_projects, extract_email
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

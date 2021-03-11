@@ -13,6 +13,7 @@ from isabella_users_frontend.userutils import UserUtils
 from isabella_users_frontend.log import Logger
 from isabella_users_frontend.config import parse_config
 from isabella_users_frontend.msg import InfoAccOpen
+from isabella_users_frontend.helpers import fetch_projects, extract_email
 
 from unidecode import unidecode
 
@@ -65,32 +66,6 @@ def subscribe_maillist(server, credentials, name, email, username, logger):
         return False
 
 
-def fetch_projects(subscription, logger):
-    try:
-        response = requests.get(subscription, timeout=connection_timeout, verify=False)
-        response.raise_for_status()
-        users = dict()
-        projects = response.json()
-
-        return projects
-
-    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
-        logger.error('requests error: %s' % e)
-
-        return False
-
-
-def concat(s):
-    if '-' in s:
-        s = s.split('-')
-        s = ''.join(s)
-    if ' ' in s:
-        s = s.split(' ')
-        s = ''.join(s)
-
-    return s
-
-
 def gen_password():
     s = os.urandom(64)
 
@@ -126,37 +101,6 @@ def create_homedir(dir, uid, gid, logger):
         logger.error(e)
 
         return False
-
-
-def extract_email(projects, name, surname, last_project, logger):
-    email = None
-
-    # last_project is multi project field now. pick last one, but any will
-    # actually play as we're just grabbing email from the API feed.
-    if projects:
-        try:
-            target_project = last_project.split()[-1]
-
-            for p in projects:
-                if target_project == p['sifra']:
-                    users = p['users']
-                    for u in users:
-                        if (name == concat(unidecode(u['ime'])) and
-                            surname == concat(unidecode(u['prezime']))):
-                            email = u['mail']
-            if email:
-                return email
-
-            else:
-                logger.error('Failed grabbing an email for %s %s from the API' % (name, surname))
-
-        except IndexError as exc:
-            logger.error('Failed grabbing an project for %s %s from the API' % (name, surname))
-
-    else:
-        logger.error('Failed grabbing an email for %s %s from the API as project is unknown' % (name, surname))
-
-    return None
 
 
 def diff_projects(old, new):

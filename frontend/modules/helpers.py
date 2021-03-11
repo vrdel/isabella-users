@@ -36,20 +36,6 @@ def extract_email(projects, name, surname, last_project, logger):
     return None
 
 
-def fetch_users(subscription, logger):
-    try:
-        response = requests.get(subscription, timeout=connection_timeout, verify=False)
-        response.raise_for_status()
-        projects = response.json()
-
-        return projects
-
-    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
-        logger.error('requests error: %s' % e)
-
-        return False
-
-
 def concat(s):
     if '-' in s:
         s = s.split('-')
