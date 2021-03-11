@@ -6,7 +6,7 @@
 %define mydist %{dist}
 
 Name:           isabella-users-puppet
-Version:        0.1.12
+Version:        0.1.13
 Release:        1%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
@@ -55,6 +55,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Thu Mar 11 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.13-1%{?dist}
+- fix wronlgy reported changes taking into account only active projects assignments
+- logrotate script for cache rotating backup
 * Wed Mar 3 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.12-1%{?dist}
 - nicer error message when user is not found in local cache
 - taken into account grace status for project
