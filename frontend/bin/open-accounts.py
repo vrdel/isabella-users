@@ -192,6 +192,8 @@ def main():
     # existing project, projects and last_projects field differ. based on their
     # values, it will be concluded what needs to be done and projects field
     # will be updated to match last_projects field afterward.
+    # also if user was previously disabled, but now is back with new project,
+    # update his shell record with one from /etc/passwd
     update_sge = session.query(User).filter(User.projects != User.last_projects).all()
     for u in update_sge:
         diff = diff_projects(u.projects, u.last_projects)
@@ -220,6 +222,13 @@ def main():
 
                 except Exception as e:
                     logger.error('Failed updating user %s to SGE: %s' % (u.username, str(e)))
+
+            # user was previously disabled and now is back with new project
+            if u.shell == '/sbin/nologin':
+                userobj = usertool.get_user(u.username)
+                shell = usertool.get_user_shell(userobj)
+                u.shell = shell
+                logger.info('User %s was disabled, recording new shell settings: %s' % (u.username, shell))
 
         # this one is called to explicitly set SGE default_project to user's
         # last_project assigned
@@ -264,9 +273,13 @@ def main():
             logger.info('Mail sent for %s' % u.username)
     session.commit()
 
-    # subscribe opened user account to mailing list
+    # subscribe opened user account to mailing list. skip closed accounts that
+    # were previously unsubscribed with /sbin/nologin explicitly set in
+    # close-accounts.py
     not_subscribed = session.query(User).filter(User.issubscribe == False).all()
     for u in not_subscribed:
+        if u.shell == '/sbin/nologin':
+            continue
         credentials = conf_opts['external']['mailinglistcredentials']
         listname = conf_opts['external']['mailinglistname']
         listserver = conf_opts['external']['mailinglistserver']
