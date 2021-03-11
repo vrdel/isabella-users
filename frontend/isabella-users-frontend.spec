@@ -10,7 +10,7 @@
 %endif
 
 Name:           isabella-users-frontend
-Version:        0.1.7
+Version:        0.1.8
 Release:        1%{?mydist}.srce
 Summary:        Scripts for opening user accounts on SRCE Isabella cluster
 Group:          Applications/System
@@ -57,6 +57,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
+* Thu Mar 11 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.8-1%{?dist}
+- unsubscribe and nologin handle
 * Wed Mar 3 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.7-1%{?dist}
 - bugfix release; fix sign off of user to default active project
 * Tue Mar 2 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.6-1%{?dist}

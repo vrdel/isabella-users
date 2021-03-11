@@ -26,6 +26,7 @@ setup(name=NAME,
       data_files=[('/etc/%s' % NAME, glob.glob('config/*')),
                   ('/usr/libexec/%s' % NAME, ['bin/open-accounts.py',
                                               'bin/update-cache.py',
+                                              'bin/close-accounts.py',
                                               'bin/email-test.py'
                                               ]),
                   ('/usr/libexec/%s/sgetools/' % NAME, glob.glob('helpers/sgetools/*')),
