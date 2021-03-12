@@ -222,13 +222,9 @@ def main():
                              status=int(user['status_id']),
                              consent_disable=False,
                              projects='')
-
-            # do not create new associations to expired projects
             if u_dup:
                 projectdb.users.extend([u_dup])
             else:
-                if projectdb.status != 1:
-                    continue
                 projectdb.users.extend([u])
         if diff:
             for ud in diff:
