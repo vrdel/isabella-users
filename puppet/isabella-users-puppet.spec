@@ -7,7 +7,7 @@
 
 Name:           isabella-users-puppet
 Version:        0.1.13
-Release:        1%{?mydist}.srce
+Release:        2%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
 License:        GPL
@@ -55,9 +55,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
-* Thu Mar 11 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.13-1%{?dist}
+* Thu Mar 11 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.13-2%{?dist}
 - fix wronlgy reported changes taking into account only active projects assignments
 - logrotate script for cache rotating backup
+- allows assign to expired project, filtered later, but only needed for email-expire
 * Wed Mar 3 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.12-1%{?dist}
 - nicer error message when user is not found in local cache
 - taken into account grace status for project
