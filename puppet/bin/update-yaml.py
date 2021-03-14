@@ -245,10 +245,13 @@ def main():
                         yaml_projects = ''
                     if yaml_projects != user.projects:
                         diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
-                        if len(user.projects.split(' ')) >= len(yaml_projects.split(' ')):
+                        if len(user.projects.split(' ')) > len(yaml_projects.split(' ')):
                             added_projects_users.append((user.username, ' '.join(diff_project)))
-                        else:
+                        elif len(user.projects.split(' ')) < len(yaml_projects.split(' ')):
                             deleted_projects_users.append((user.username, ' '.join(diff_project)))
+                        else:
+                            deleted_projects_users.append((user.username, yaml_projects))
+                            added_projects_users.append((user.username, user.projects))
                         if user.projects:
                             yaml_user['comment'] = '{0} {1}, {2}'.format(user.name,
                                                                          user.surname,
