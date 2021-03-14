@@ -92,7 +92,7 @@ def main():
     # in mercy grace period for status = 2. otherwise project is active -
     # status = 1.
     for project in session.query(Projects):
-        if project.date_to + gracedays < datenow:
+        if project.date_to + gracedays <= datenow:
             project.status = 0
             project_stat['expired'] += 1
         elif (project.date_to + gracedays >= datenow
