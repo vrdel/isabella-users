@@ -245,7 +245,10 @@ def main():
                         yaml_projects = ''
                     if yaml_projects != user.projects:
                         diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
-                        added_projects_users.append((user.username, ' '.join(diff_project)))
+                        if len(user.projects.split(' ')) >= len(yaml_projects.split(' ')):
+                            added_projects_users.append((user.username, ' '.join(diff_project)))
+                        else:
+                            deleted_projects_users.append((user.username, ' '.join(diff_project)))
                         if user.projects:
                             yaml_user['comment'] = '{0} {1}, {2}'.format(user.name,
                                                                          user.surname,
@@ -262,25 +265,6 @@ def main():
         except NoResultFound as e:
             logger.error('{1} {0}'.format(user, str(e)))
             pass
-
-        # reflect user signoff from project in his yaml comment entry. user's
-        # projects field will not have project id listed as it will be updated
-        # with update-userdb.py prior. remove it from yaml comment field also.
-        for project in projects_changed:
-            for user, metadata in yusers['isabella_users'].items():
-                if project in metadata['comment']:
-                    user = session.query(User).filter(User.username==user).one()
-                    if project not in user.projects:
-                        yaml_user = yusers['isabella_users'][user.username]
-                        diff_project = user_projects_changed([yaml_projects], [user.projects], logger)
-                        deleted_projects_users.append((user.username, ' '.join(diff_project)))
-                        if user.projects:
-                            yaml_user['comment'] = '{0} {1}, {2}'.format(user.name,
-                                                                         user.surname,
-                                                                         user.projects)
-                        else:
-                            yaml_user['comment'] = '{0} {1},'.format(user.name,
-                                                                     user.surname)
 
     else:
         logger.info("No changes in projects and users associations")
