@@ -70,13 +70,15 @@ def main():
     grace_users = session.query(User).filter(User.status == 2).all()
     grace_stat, expire_stat = list(), list()
     for user in grace_users:
-        if user.expire_email or user.grace_email:
+        if user.grace_email:
             continue
+
         dates = [project.date_to for project in user.projects_assign]
         most_recent = max(dates)
         last_project = [project for project in user.projects_assign
                         if project.date_to == most_recent]
         last_project = last_project[0]
+
         if last_project.date_to == datenow:
             conf_ext = conf_opts['external']
             email = EmailSend(conf_ext['emailtemplatewarn'],
@@ -91,20 +93,31 @@ def main():
                 user.grace_email = True
                 grace_stat.append(user)
                 session.commit()
-        if last_project.date_to + gracedays == datenow:
-            conf_ext = conf_opts['external']
-            email = EmailSend(conf_ext['emailtemplatedelete'],
-                              conf_ext['emailhtml'], conf_ext['emailsmtp'],
-                              conf_ext['emailfrom'], user.mail,
-                              last_project, gracedays, logger)
-            msg = f'Sent expire email for {user.username} {last_project.idproj} @ {user.mail}'
-            if args.noaction:
-                logger.info(msg)
-            elif email.send():
-                logger.info(msg)
-                user.expire_email = True
-                expire_stat.append(user)
-                session.commit()
+
+    for user in grace_users:
+        # ensure that user firstly received grace_email before
+        # expire_mail will be sent to him
+        if user.grace_email and not user.expire_email:
+            dates = [project.date_to for project in user.projects_assign]
+            most_recent = max(dates)
+            last_project = [project for project in user.projects_assign
+                            if project.date_to == most_recent]
+            last_project = last_project[0]
+
+            if last_project.date_to + gracedays == datenow:
+                conf_ext = conf_opts['external']
+                email = EmailSend(conf_ext['emailtemplatedelete'],
+                                  conf_ext['emailhtml'], conf_ext['emailsmtp'],
+                                  conf_ext['emailfrom'], user.mail,
+                                  last_project, gracedays, logger)
+                msg = f'Sent expire email for {user.username} {last_project.idproj} @ {user.mail}'
+                if args.noaction:
+                    logger.info(msg)
+                elif email.send():
+                    logger.info(msg)
+                    user.expire_email = True
+                    expire_stat.append(user)
+                    session.commit()
 
     if not grace_stat and not expire_stat:
         logger.info('No grace and expired users')
