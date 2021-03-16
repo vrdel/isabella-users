@@ -70,7 +70,7 @@ def main():
     grace_users = session.query(User).filter(User.status == 2).all()
     grace_stat, expire_stat = list(), list()
     for user in grace_users:
-        if user.expire_email:
+        if user.expire_email or user.grace_email:
             continue
         dates = [project.date_to for project in user.projects_assign]
         most_recent = max(dates)
@@ -88,7 +88,9 @@ def main():
                 logger.info(msg)
             elif email.send():
                 logger.info(msg)
+                user.grace_email = True
                 grace_stat.append(user)
+                session.commit()
         if last_project.date_to + gracedays == datenow:
             conf_ext = conf_opts['external']
             email = EmailSend(conf_ext['emailtemplatedelete'],

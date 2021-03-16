@@ -33,6 +33,7 @@ class User(Base):
     projects = Column(Unicode(250))
     was_active_projects = Column(Unicode(250))
     expire_email = Column(Boolean)
+    grace_email = Column(Boolean)
     projects_assign = relationship("Projects", secondary="assign", backref=backref('users', order_by=id))
 
     def __init__(self, feedid, username, name, surname, feeduid, mail,
@@ -50,6 +51,7 @@ class User(Base):
         self.date_disabled = None
         self.was_active_projects = None
         self.expire_email = False
+        self.grace_email = False
 
 
 class Projects(Base):
