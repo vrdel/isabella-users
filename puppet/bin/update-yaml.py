@@ -318,9 +318,10 @@ def main():
 
         if newusers:
             logger.info("Added %d users: %s" % (len(newusersd), ', '.join(newusersd.keys())))
-            f = session.query(MaxUID).first()
-            f.uid = uid
-            session.commit()
+            if not args.noaction:
+                f = session.query(MaxUID).first()
+                f.uid = uid
+                session.commit()
             if added_projects_users:
                 logger.info("Changed projects for %d users: %s" %
                             (len(added_projects_users), ', '.join(added_projects_users)))
