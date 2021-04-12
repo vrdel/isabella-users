@@ -181,6 +181,11 @@ def main():
                 u.name = feedname
                 u.surname = feedsurname
                 u.consent_disable = True if user['status_id'] == 5 else False
+                if user['status_id'] == 6:
+                    u.api_removed = True
+                    continue
+                else:
+                    u.api_removed = False
             except NoResultFound:
                 try:
                     # uid not found, lookup by name and surname
