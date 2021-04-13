@@ -24,6 +24,7 @@ def parse_config(logger=None):
                 if section.startswith('settings'):
                     confopts['settings'] = {'gid': config.getint(section, 'gid')}
                     confopts['settings'].update({'shell': config.get(section, 'shell')})
+                    confopts['settings'].update({'disableshell': config.get(section, 'disableshell')})
                     confopts['settings'].update({'disableuser': config.getboolean(section, 'disableuser')})
                     confopts['settings'].update({'gracedays': config.getint(section, 'gracedays')})
                     confopts['settings'].update({'cache': config.get(section, 'cache')})
