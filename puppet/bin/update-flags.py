@@ -113,14 +113,14 @@ def main():
     # be checked on update-yaml.py .
     for user in session.query(User):
         proj_statuses = [project.status for project in user.projects_assign]
-        if user.api_removed:
+        if len(proj_statuses) == 0:
             user.status = 0
             if user.projects:
                 user.was_active_projects = user.projects
             user.expire_email = True
             users_stat['disabled'] += 1
             continue
-        if user.consent_disable:
+        elif user.consent_disable:
             user.status = 0
             if user.projects:
                 user.was_active_projects = user.projects
