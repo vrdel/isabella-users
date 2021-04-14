@@ -7,7 +7,7 @@
 
 Name:           isabella-users-puppet
 Version:        0.1.14
-Release:        1%{?mydist}.srce
+Release:        2%{?mydist}.srce
 Summary:        Scripts for updating Puppet yaml with user accounts
 Group:          Applications/System
 License:        GPL
@@ -55,7 +55,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libexecdir}/%{name}/*.py*
 
 %changelog
-* Tue Apr 13 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.14-1%{?dist}
+* Tue Apr 13 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.14-2%{?dist}
 - disable user that are removed from corresponding projects on the API
 * Tue Mar 16 2021 Daniel Vrcic <dvrcic@srce.hr> - 0.1.13-4%{?dist}
 - fix wrongly reported changes taking into account only active projects assignments
