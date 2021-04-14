@@ -118,6 +118,7 @@ def main():
             if user.projects:
                 user.was_active_projects = user.projects
             user.expire_email = True
+            user.projects = ''
             users_stat['disabled'] += 1
             continue
         elif user.consent_disable:
