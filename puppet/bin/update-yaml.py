@@ -217,6 +217,8 @@ def main():
                     metadata['comment'] = '{0} {1}, {2}'.format(udb.name,
                                                                 udb.surname,
                                                                 udb.projects)
+                    if metadata['shell'] == conf_opts['settings']['disableshell']:
+                        metadata['shell'] = udb.was_shell
                 else:
                     metadata['comment'] = '{0} {1},'.format(udb.name,
                                                             udb.surname)
